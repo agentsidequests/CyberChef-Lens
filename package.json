@@ -207,13 +207,13 @@
     "tesseract.js": false
   },
   "scripts": {
-    "start": "npx grunt dev",
-    "build": "npx grunt prod --msg=\"Experimental JSON investigation fork; not an official release.\"",
+    "start": "node node_modules/grunt/bin/grunt dev",
+    "build": "node node_modules/grunt/bin/grunt prod --msg=\"Experimental JSON investigation fork; not an official release.\"",
     "prepare:magic-json": "node --no-warnings scripts/prepare-json-investigation.mjs",
     "test:magic-json": "node scripts/test-json-investigation.mjs",
     "node": "npx grunt node",
     "repl": "node --no-warnings src/node/repl.mjs",
-    "test": "npx grunt configTests && node --no-warnings --no-deprecation --openssl-legacy-provider tests/node/index.mjs && node --no-warnings --no-deprecation --openssl-legacy-provider --trace-uncaught tests/operations/index.mjs",
+    "test": "node node_modules/grunt/bin/grunt configTests && node --no-warnings --no-deprecation --openssl-legacy-provider tests/node/index.mjs && node --no-warnings --no-deprecation --openssl-legacy-provider --trace-uncaught tests/operations/index.mjs",
     "testnodeconsumer": "npx grunt testnodeconsumer",
     "testui": "npx grunt testui",
     "testuidev": "npx nightwatch --env=dev",

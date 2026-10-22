@@ -1,11 +1,20 @@
 import {test} from "node:test";
 import assert from "node:assert/strict";
+import {readFileSync} from "node:fs";
 import config from "../../webpack.config.js";
 
 const rules = config.module.rules;
 const babel = rules.find(rule => rule.loader === "babel-loader");
 const material = rules.find(rule => rule.options?.imports === "default popper.js/dist/umd/popper.js Popper");
 const fonts = rules.find(rule => rule.generator?.filename === "assets/fonts/[name][ext]");
+
+test("primary npm entrypoints invoke the local CLI directly rather than another npx runtime", () => {
+    const {scripts} = JSON.parse(readFileSync(new URL("../../package.json", import.meta.url)));
+    for (const name of ["start", "build", "test"]) {
+        assert.ok(scripts[name].startsWith("node node_modules/grunt/bin/grunt "), name);
+        assert.ok(!scripts[name].includes("npx"), name);
+    }
+});
 
 test("ordinary dependencies are excluded on POSIX and Windows, while intended shims remain eligible", () => {
     for (const separator of ["/", "\\"]) {
