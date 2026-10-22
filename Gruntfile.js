@@ -32,7 +32,7 @@ module.exports = function (grunt) {
         "Creates a production-ready build. Use the --msg flag to add a compile message.",
         [
             "eslint", "clean:prod", "clean:config", "exec:generateConfig", "findModules", "webpack:web",
-            "copy:standalone", "zip:standalone", "clean:standalone", "calcDownloadHash", "chmod"
+            "copy:forkNotices", "copy:standalone", "zip:standalone", "clean:standalone", "calcDownloadHash", "chmod"
         ]);
 
     grunt.registerTask("node",
@@ -285,6 +285,12 @@ module.exports = function (grunt) {
             }
         },
         copy: {
+            forkNotices: {
+                files: [
+                    {src: "LICENSE", dest: "build/prod/LICENSE"},
+                    {src: "THIRD_PARTY_NOTICES.md", dest: "build/prod/THIRD_PARTY_NOTICES.md"}
+                ]
+            },
             ghPages: {
                 options: {
                     process: function (content, srcpath) {

@@ -142,7 +142,7 @@ module.exports = {
         rules: [
             {
                 test: /\.m?js$/,
-                exclude: /node_modules\/(?!crypto-api|bootstrap)/,
+                exclude: /node_modules[\\/](?!crypto-api|bootstrap)/,
                 options: {
                     configFile: path.resolve(__dirname, "babel.config.js"),
                     cacheDirectory: true,
@@ -169,7 +169,7 @@ module.exports = {
                 type: "asset/source"
             },
             {
-                test: /bootstrap-material-design/,
+                test: /bootstrap-material-design[\\/].*\.js$/,
                 loader: "imports-loader",
                 options: {
                     imports: "default popper.js/dist/umd/popper.js Popper"
@@ -205,7 +205,7 @@ module.exports = {
                 type: "asset/inline",
             },
             { // Store font .fnt and .png files in a separate fonts folder
-                test: /(\.fnt$|bmfonts\/.+\.png$)/,
+                test: /(\.fnt$|bmfonts[\\/].+\.png$)/,
                 type: "asset/resource",
                 generator: {
                     filename: "assets/fonts/[name][ext]"

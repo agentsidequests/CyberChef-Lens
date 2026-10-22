@@ -168,7 +168,10 @@ TestRegister.addApiTests([
 
     it("chef.help: returns multiple results", () => {
         const result = chef.help("base 64");
-        assert.strictEqual(result.length, 14);
+        // The opt-in wrapper mode now describes its native Base64 recipe.
+        // Preserve all 14 previous matches, plus the newly searchable Magic.
+        assert.strictEqual(result.filter(op => op.name !== "Magic").length, 14);
+        assert.strictEqual(result.filter(op => op.name === "Magic").length, 1);
     }),
 
     it("chef.help: looks in description for matches too", () => {

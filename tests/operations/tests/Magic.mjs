@@ -196,5 +196,155 @@ TestRegister.addTests([
                 args: [0, false, false]
             }
         ]
+    },
+    {
+        name: "Magic JSON goal: complete Base64 document",
+        input: "eyJkZW1vIjp0cnVlLCJ2YWx1ZXMiOlsxLDIsM119",
+        expectedMatch: /One JSON output found\. Inspect it before use[\s\S]+not verified[\s\S]+Complete JSON object\/array[\s\S]+Load JSON recipe[\s\S]+Readable preview/,
+        recipeConfig: [{op: "Magic", args: [3, false, false, "", "JSON object or array"]}]
+    },
+    {
+        name: "Magic JSON goal: reject malformed tail beyond preview",
+        input: '{"note":"' + "a".repeat(140) + '"} TRAILING GARBAGE',
+        expectedMatch: /No JSON object or array found in these candidate pools/,
+        recipeConfig: [{op: "Magic", args: [1, false, false, "", "JSON object or array"]}]
+    },
+    {
+        name: "Magic JSON goal: competing valid percent interpretations",
+        input: '{"note":"%41%42%43%44"}',
+        expectedMatch: /2 different JSON outputs survived. Compare before choosing[\s\S]+Original input \(no decoding\)/,
+        recipeConfig: [{op: "Magic", args: [1, false, false, "", "JSON object or array"]}]
+    },
+    {
+        name: "Magic JSON goal: negative empty input",
+        input: "",
+        expectedMatch: /No JSON object or array found in these candidate pools/,
+        recipeConfig: [{op: "Magic", args: [1, false, false, "", "JSON object or array"]}]
+    },
+    {
+        name: "Magic JSON goal: original Any behavior has no evidence panel",
+        input: "41 42 43 44 45",
+        unexpectedMatch: /data-magic-goal-report/,
+        recipeConfig: [{op: "Magic", args: [3, false, false, "", "Any"]}]
+    },
+    {
+        name: "Magic JSON goal: bound input before discovery",
+        input: "a".repeat(65537),
+        expectedOutput: "JSON-goal checking supports inputs up to 64 KiB and depth up to 5. Choose Any for the original Magic behavior.",
+        recipeConfig: [{op: "Magic", args: [3, false, false, "", "JSON object or array"]}]
+    },
+    {
+        name: "Magic JSON goal: bound depth before discovery",
+        input: "{}",
+        expectedOutput: "JSON-goal checking supports inputs up to 64 KiB and depth up to 5. Choose Any for the original Magic behavior.",
+        recipeConfig: [{op: "Magic", args: [6, false, false, "", "JSON object or array"]}]
+    },
+    {
+        name: "Magic JSON goal: no raw HTML interpolation from candidate data",
+        input: '{"example":"<img src=x onerror=alert(1)>"}',
+        unexpectedMatch: /<img src=x/,
+        recipeConfig: [{op: "Magic", args: [1, false, false, "", "JSON object or array"]}]
+    },
+    {
+        name: "Magic JSON goal: untimed URL-safe serializer",
+        input: "WzEsMiwzLDRd.wSPHqC0gR7VUqivlSukJ0IeTDgo",
+        expectedMatch: /Complete JSON object\/array[\s\S]+\[1,2,3,4\][\s\S]+Possible untimed URL-safe serializer/,
+        recipeConfig: [{op: "Magic", args: [3, false, false, "", "JSON object or array"]}]
+    },
+    {
+        name: "Magic JSON goal: raw untimed JSON keeps internal periods and needs no Base64",
+        input: '{"value":1.25,"site":"a.b:c"}.' + "A".repeat(43),
+        expectedMatch: /Complete JSON object\/array[\s\S]+1\.25[\s\S]+Possible untimed raw JSON serializer/,
+        unexpectedMatch: /From_Base64/,
+        recipeConfig: [{op: "Magic", args: [3, false, false, "", "JSON object or array"]}]
+    },
+    {
+        name: "Magic wrappers: Flask payload and trust boundary",
+        input: "eyJyb2xlIjoic3VwZXJ1c2VyIiwidXNlciI6ImFkbWluIn0.aZ-KEw.E_x6bOhA4GU9t72pMinJUjN-O3I",
+        expectedMatch: /not verified[\s\S]+Complete JSON object\/array[\s\S]+Load payload recipe[\s\S]+superuser[\s\S]+Possible Flask-compatible session[\s\S]+unverified/,
+        recipeConfig: [{op: "Magic", args: [3, false, false, "", "JSON wrappers"]}]
+    },
+    {
+        name: "Magic wrappers: Django no generic search or crib",
+        input: "eyJtZXNzYWdlIjoiSGVsbG8hIn0:bzb48DBkB-bwLaCnUVB75r5VAPUEpzWJPrTb80JMIXM",
+        expectedMatch: /Complete JSON object\/array[\s\S]+Load payload recipe[\s\S]+Hello![\s\S]+Possible Django-compatible signed object/,
+        recipeConfig: [{op: "Magic", args: [9, true, true, "[invalid and ignored crib", "JSON wrappers"]}]
+    },
+    {
+        name: "Magic wrappers: unsupported compressed-container shape",
+        input: ".abc.def.ghi",
+        expectedMatch: /unsupported[\s\S]+not a supported compressed-container shape[\s\S]+No decompression was attempted/,
+        recipeConfig: [{op: "Magic", args: [3, false, false, "", "JSON wrappers"]}]
+    },
+    {
+        name: "Magic wrappers: no markup execution from decoded JSON",
+        input: "eyJ4IjoiPGltZyBzcmM9eCBvbmVycm9yPWFsZXJ0KDEpPiJ9:bzb48DBkB-bwLaCnUVB75r5VAPUEpzWJPrTb80JMIXM",
+        unexpectedMatch: /<img src=x/,
+        recipeConfig: [{op: "Magic", args: [3, false, false, "", "JSON wrappers"]}]
+    },
+    {
+        name: "Magic interpretation: unencoded JWS field is not a compatible JWT payload",
+        input: "eyJhbGciOiJIUzI1NiIsImI2NCI6ZmFsc2UsImNyaXQiOlsiYjY0Il19.eyJwcm9iZSI6Im5vdC1hLXRydXN0ZWQtY2xhaW0ifQ." + "A".repeat(43),
+        expectedMatch: /JWT compatibility check failed[\s\S]+not the declared JWS payload[\s\S]+Load field recipe/,
+        unexpectedMatch: /JWT-compatible token/,
+        recipeConfig: [{op: "Magic", args: [3, false, false, "", "JSON object or array"]}]
+    },
+    {
+        name: "Magic interpretation: header collision is visible",
+        input: "eyJhbGciOiJIUzI1NiJ9.JC4wMg.5mvfOroL-g7HyqJoozehmsaqmvTYGEq5jTI1gVvoEoQ",
+        expectedMatch: /Possible header \/ first-field interpretation[\s\S]+may be a header rather than the message[\s\S]+Load field recipe/,
+        unexpectedMatch: /Load payload recipe/,
+        recipeConfig: [{op: "Magic", args: [3, false, false, "", "JSON object or array"]}]
+    },
+    {
+        name: "Magic interpretation: JSON envelope is not extracted inner payload",
+        input: '{"payload":"eyJ4IjoxfQ","signature":"unverified"}',
+        expectedMatch: /inner payload has not been extracted[\s\S]+Outer JSON envelope[\s\S]+Inspect envelope recipe/,
+        unexpectedMatch: /Load payload recipe/,
+        recipeConfig: [{op: "Magic", args: [3, false, false, "", "JSON object or array"]}]
+    },
+    {
+        name: "Magic carriers: paired Cookie data has a native payload action",
+        input: "session=eyJtZXNzYWdlIjoiaGkifQ==; session.sig=vdp2-kj-91tgzbWcV1QzofT3hu0",
+        expectedMatch: /Extracted Cookie payload \(unverified\)[\s\S]+Load payload recipe/,
+        recipeConfig: [{op: "Magic", args: [3, false, false, "", "JSON object or array"]}]
+    },
+    {
+        name: "Magic carriers: outer envelope and extracted payload have distinct roles",
+        input: '{"payload":"eyJ4IjoxfQ","protected":"eyJhbGciOiJIUzI1NiJ9","signature":"' + "A".repeat(43) + '"}',
+        expectedMatch: /inner JSON payload was extracted[\s\S]+Outer JSON envelope[\s\S]+Inspect envelope recipe[\s\S]+Extracted envelope payload \(unverified\)[\s\S]+Load payload recipe/,
+        unexpectedMatch: /inner payload has not been extracted/,
+        recipeConfig: [{op: "Magic", args: [3, false, false, "", "JSON object or array"]}]
+    },
+    {
+        name: "Magic carriers: unencoded envelope stays inspectable without a payload action",
+        input: '{"payload":"eyJ4IjoxfQ","protected":"eyJhbGciOiJIUzI1NiIsImI2NCI6ZmFsc2V9","signature":"' + "A".repeat(43) + '"}',
+        expectedMatch: /b64:false[\s\S]+Inspect envelope recipe/,
+        unexpectedMatch: /Load payload recipe/,
+        recipeConfig: [{op: "Magic", args: [3, false, false, "", "JSON object or array"]}]
+    },
+    {
+        name: "Magic compact variants: unsigned JSON is visibly unauthenticated",
+        input: "eyJhbGciOiJub25lIn0.eyJoZWxsbyI6ICJ3b3JsZCJ9.",
+        expectedMatch: /Unsigned JSON payload \(unverified\)[\s\S]+Unsigned token[\s\S]+no authentication[\s\S]+Load payload recipe/,
+        recipeConfig: [{op: "Magic", args: [3, false, false, "", "JSON object or array"]}]
+    },
+    {
+        name: "Magic compact variants: padded fields are generic data, not canonical JWT",
+        input: "eyJhbGciOiJIUzI1NiJ9.eyJ4IjoxfQ==.YQ==",
+        expectedMatch: /Decoded padded JSON field \(unverified\)[\s\S]+not canonical JWT\/JWS encoding[\s\S]+Load field recipe/,
+        recipeConfig: [{op: "Magic", args: [3, false, false, "", "JSON wrappers"]}]
+    },
+    {
+        name: "Magic compact variants: missing signature cannot silently become unsigned",
+        input: "eyJhbGciOiJIUzI1NiJ9.e30.",
+        expectedMatch: /signature is missing[\s\S]+explicit alg:none/,
+        recipeConfig: [{op: "Magic", args: [3, false, false, "", "JSON wrappers"]}]
+    },
+    {
+        name: "Magic wrappers: input bound",
+        input: "a".repeat(65537),
+        expectedOutput: "JSON wrapper investigation supports inputs up to 64 KiB.",
+        recipeConfig: [{op: "Magic", args: [3, false, false, "", "JSON wrappers"]}]
     }
 ]);

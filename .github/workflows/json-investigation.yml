@@ -1,0 +1,31 @@
+name: JSON investigation checks
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+      - name: Install locked dependencies without lifecycle hooks
+        run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Prepare inspected source generators
+        run: npm run prepare:magic-json
+      - name: Native operation and API tests
+        run: npm test
+      - name: Portable JSON investigation tests
+        run: npm run test:magic-json
+      - name: Build and package
+        run: npm run build
+
+# Check-only workflow: no deployment, repository writes, registry login,
+# npm publication, container publication, or automatic release creation.

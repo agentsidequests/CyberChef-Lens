@@ -419,8 +419,10 @@
         "ops": [
             "Raw Deflate",
             "Raw Inflate",
+            "Raw Inflate Bounded",
             "Zlib Deflate",
             "Zlib Inflate",
+            "Zlib Inflate Bounded",
             "Gzip",
             "Gunzip",
             "Zip",

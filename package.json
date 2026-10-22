@@ -1,6 +1,7 @@
 {
   "name": "cyberchef",
   "version": "11.5.0",
+  "private": true,
   "description": "The Cyber Swiss Army Knife for encryption, encoding, compression and data analysis.",
   "author": "GCHQ <CyberChef@gchq.gov.uk>",
   "homepage": "https://gchq.github.io/CyberChef",
@@ -170,6 +171,7 @@
     "nwmatcher": "^1.4.4",
     "openpgp": "^6.3.2",
     "otpauth": "^9.5.2",
+    "pako-bounded": "npm:pako@3.0.2",
     "path": "^0.12.7",
     "popper.js": "^1.16.1",
     "process": "^0.11.10",
@@ -206,7 +208,9 @@
   },
   "scripts": {
     "start": "npx grunt dev",
-    "build": "npx grunt prod",
+    "build": "npx grunt prod --msg=\"Experimental JSON investigation fork; not an official release.\"",
+    "prepare:magic-json": "node --no-warnings scripts/prepare-json-investigation.mjs",
+    "test:magic-json": "node scripts/test-json-investigation.mjs",
     "node": "npx grunt node",
     "repl": "node --no-warnings src/node/repl.mjs",
     "test": "npx grunt configTests && node --no-warnings --no-deprecation --openssl-legacy-provider tests/node/index.mjs && node --no-warnings --no-deprecation --openssl-legacy-provider --trace-uncaught tests/operations/index.mjs",
