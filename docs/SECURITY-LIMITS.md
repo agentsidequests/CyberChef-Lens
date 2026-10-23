@@ -45,6 +45,32 @@ of one stream and never return a partial prefix after refusal. Checksummed zlib
 and raw DEFLATE are separate operations; raw DEFLATE has no checksum. Decoder
 workspace and final output assembly consume memory beyond retained-output bytes.
 
+## Lossless JSON inspection
+
+The opt-in lossless JSON formatting/comparison paths accept complete strict JSON
+only, with 64 KiB per document, 16,384 tokens and nesting depth 64. Formatting
+retains each token spelling and order, replacing insignificant whitespace only;
+output is capped at 1 MiB. These bounds are not whole-process memory limits.
+Parsed JavaScript values are used only to validate syntax, never to supply
+rewritten output or semantic comparisons. Repeated keys are retained, not
+resolved or declared safe.
+
+Lens compares no more than eight results against the first displayed text,
+without selecting it as truth. Only the first changed token is located; a
+shortened preview can omit other differences. Exact text, formatting-only text
+and token differences are separate outcomes. Numeric spelling, string escapes
+and member order stay significant even when an application might treat them
+as equivalent. Unsupported/oversize comparisons remain explicitly unchecked;
+their original result and guarded recipe action remain available.
+
+Diff's separate JSON (lossless) mode formats both documents, then uses the
+existing line-diff library with a cooperative 250 ms and 1,024-edit cap. This
+clock does not cover parsing, formatting or all internal work. A limited diff
+returns an explicit failure, not equality. Display checkboxes can hide additions
+or removals; the comparison status still reports differing token text. A custom
+sample delimiter must be nonempty and at most 1 KiB UTF-8. No cryptographic,
+schema, semantic-equivalence or duplicate-member interpretation is performed.
+
 ## Inherited dependency advisories — reviewed October 22, 2026
 
 The production lockfile audit reports 26 affected package entries: 1 critical,

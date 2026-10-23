@@ -66,3 +66,19 @@ They isolate automatic composition: the existing decoders already had the
 necessary capabilities. The portable tests also cover 25 transport/container
 combinations and guarded refusals; that matrix is a regression check, not a
 performance benchmark.
+
+## Lossless text: formatting is a separate boundary
+
+Four constructed pairs were frozen before this continuation: adjacent integers
+above JavaScript's exact-integer range, a repeated member versus its final
+member alone, an overflowing exponent versus null, and a formatting-only
+control. In the pinned native JSON Beautify path, each pair became identical
+after parsing and serialization. Native Character Diff and raw JSON Diff found
+differences in all four original string pairs; they are valid manual controls.
+
+The new opt-in formatting path keeps every non-whitespace JSON token verbatim.
+It distinguishes the first three pairs and identifies the fourth as
+formatting-only, without assigning semantic equality. Repeated members, numeric
+lexemes and escaped string spelling remain visible. The same bounded text
+inspection supplies Lens's first-difference view. These selected mechanism tests
+are not an independent field evaluation or a general comparison score.

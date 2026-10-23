@@ -9,6 +9,7 @@ import JSON5 from "json5";
 import OperationError from "../errors/OperationError.mjs";
 import Operation from "../Operation.mjs";
 import Utils from "../Utils.mjs";
+import {formatJsonText} from "../lib/JsonText.mjs";
 
 /**
  * JSON Beautify operation
@@ -24,6 +25,7 @@ class JSONBeautify extends Operation {
         this.name = "JSON Beautify";
         this.module = "Code";
         this.description = "Indents and pretty prints JavaScript Object Notation (JSON) code.<br><br>Tags: json viewer, prettify, syntax highlighting";
+        this.description += "<br><br><b>Lossless strict JSON:</b> Preserve number spelling, duplicate members, string escapes and member order. Only insignificant whitespace is replaced; JSON5 syntax is refused. Input limit 64 KiB, 16,384 tokens, depth 64; formatted output limit 1 MiB. Sorting keys is not supported in this mode. The formatted view is escaped text rather than a parsed collapsible tree. Original behavior remains the default.";
         this.inputType = "string";
         this.outputType = "string";
         this.presentType = "html";
@@ -42,6 +44,11 @@ class JSONBeautify extends Operation {
                 name: "Formatted",
                 type: "boolean",
                 value: true
+            },
+            {
+                name: "Lossless strict JSON",
+                type: "boolean",
+                value: false
             }
         ];
     }
@@ -52,6 +59,15 @@ class JSONBeautify extends Operation {
      * @returns {string}
      */
     run(input, args) {
+        if (args[3]) {
+            if (args[1]) throw new OperationError("Lossless JSON preserves member order. Turn off Sort Object Keys or leave lossless mode.");
+            try {
+                return formatJsonText(input, args[0]);
+            } catch (error) {
+                if (error instanceof RangeError || error instanceof SyntaxError) throw new OperationError(error.message);
+                throw error;
+            }
+        }
         if (!input) return "";
 
         const [indentStr, sortBool] = args;
@@ -76,6 +92,8 @@ class JSONBeautify extends Operation {
      * @returns {html}
      */
     present(data, args) {
+        if (args[3] && !args[2]) return Utils.escapeHtml(data);
+        if (args[3]) return '<section style="white-space:normal"><p><strong>Lossless strict JSON.</strong> Number spelling, duplicate members, escapes and member order retained. Whitespace reformatted; no schema or authenticity verification.</p><pre style="white-space:pre-wrap;overflow-wrap:anywhere" tabindex="0" aria-label="Lossless formatted JSON">' + Utils.escapeHtml(data) + "</pre></section>";
         const formatted = args[2];
         if (!formatted) return Utils.escapeHtml(data);
 

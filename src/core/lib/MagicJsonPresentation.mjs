@@ -4,6 +4,7 @@
  * @license Apache-2.0
  */
 import Utils from "../Utils.mjs";
+import {compareJsonTexts} from "./JsonText.mjs";
 
 const escape = value => Utils.escapeHtml(String(value));
 const routine = note => /^(One checksummed zlib layer only;|Explicit zip:DEF profile:)/.test(note);
@@ -59,6 +60,7 @@ const styles = `<style>
 .magic-json details[open]>summary{font-weight:600;margin-bottom:6px}.magic-json .mj-warning{border-left:3px solid #b77412;background:#fff6e4;color:#583d10;padding:8px 10px;margin:8px 0;font-size:13px}
 .magic-json ul{padding-left:20px;margin:4px 0}.magic-json .mj-chain{font-size:12px;color:#344d63;margin:5px 0 10px}.magic-json .mj-chain span{display:inline-block}
 .magic-json .mj-source{border-top:1px solid #dce4ea;padding-top:8px;margin-top:10px}.magic-json dt{font-size:12px;margin-top:6px}.magic-json dd{margin:2px 0 8px}.magic-json code{white-space:pre-wrap;color:inherit}
+.magic-json .mj-comparison{border:1px solid #c9d5df;border-radius:6px;padding:8px 12px;margin:10px 0 14px;background:#f8fbfd}.magic-json .mj-pair{border-top:1px solid #dce4ea;padding-top:9px;margin-top:10px}.magic-json .mj-pair:first-of-type{border-top:0}.magic-json .mj-sides{display:flex;gap:12px;flex-wrap:wrap}.magic-json .mj-side{flex:1 1 14rem;min-width:0}.magic-json .mj-side pre{max-height:8rem}.magic-json .mj-comparison summary{font-weight:600}
 @media(max-width:600px){.magic-json{padding:4px 2px 12px}.magic-json .mj-head,.magic-json .mj-body{padding:10px}.magic-json h2{font-size:18px}.magic-json pre{font-size:11px}}
 </style>`;
 
@@ -114,10 +116,48 @@ function compressionCue(sources) {
     return "Complete JSON object/array · syntax checked, not authenticated";
 }
 
+/** Prefer bounded payload extraction over an unbounded alternative. */
+function preferredSource(group) {
+    return group.sources.find(item => item.recipe.some(step => /^(Raw|Zlib) Inflate Bounded$/.test(step.op)) && item.payloadAction) || group.sources[0];
+}
+
+/** Show a bounded window around the first changed character in its token. */
+function tokenWindow(token, offset) {
+    let start = Math.max(0, offset - 36), end = Math.min(token.raw.length, offset + 72);
+    if (start && /[\uDC00-\uDFFF]/.test(token.raw[start])) start--;
+    if (end < token.raw.length && /[\uD800-\uDBFF]/.test(token.raw[end - 1])) end++;
+    return (start ? "…" : "") + token.raw.slice(start, end) + (end < token.raw.length ? "…" : "");
+}
+
+/** Compare exact token spelling, never rank intended meaning or trust. */
+export function presentJsonComparison(groups, layered=false) {
+    if (groups.length < 2) return "";
+    const hasContainer = groups.some(group => group.role === "Outer JSON envelope");
+    const nestedLayers = layered && new Set(groups.map(group => group.sources[0].depth)).size > 1;
+    const label = index => `Result ${index + 1}` + (layered ? ` · layer ${groups[index].sources[0].depth}` : groups[index].role ? ` · ${groups[index].role}` : "");
+    let output = `<details class="mj-comparison"${groups.length === 2 && !layered && !hasContainer ? " open" : ""}><summary>Compare ${Math.min(groups.length, 8)} ${layered ? "layer texts" : "checked texts"} — first difference</summary>` +
+        `<p class="mj-meta">${nestedLayers || hasContainer ? "Different container/payload layers are not competing answers. " : layered ? "Separate container branches may carry different messages. " : ""}Reference: ${escape(label(0))}, for comparison only—not a preferred truth. ` +
+        "Only the first changed token is located; this is not a complete diff or semantic-equivalence check. Numeric spelling, escapes and member order stay significant. Recipes and their warnings remain with each result below.</p>";
+    for (let index = 1; index < Math.min(groups.length, 8); index++) {
+        const result = compareJsonTexts(groups[0].text, groups[index].text);
+        const status = {identical: "Exact text matches", "formatting-only": "Only insignificant JSON whitespace differs", different: "JSON token text differs", "not-compared": "Not compared — inspection limit or unsupported text"}[result.status];
+        output += '<div class="mj-pair">' + `<h3>${escape(label(0))} ↔ ${escape(label(index))}</h3><p><strong>${escape(status)}</strong></p>`;
+        if (result.status === "different") output += '<div class="mj-sides">' + [[0, result.left], [index, result.right]].map(([side, token]) =>
+            '<div class="mj-side">' + `<p class="mj-label">${escape(label(side))} · ${escape(token.kind)} token · line ${token.line}, column ${token.column}</p>` +
+            pre(tokenWindow(token, result.withinTokenOffset), `${label(side)} changed token preview`) + "</div>").join("") + "</div>" +
+            '<p class="mj-meta">Token previews are shortened around the first changed character when needed. Columns count Unicode characters, not bytes. More changes may exist.</p>';
+        else if (result.status === "formatting-only") output += '<p class="mj-meta">The complete non-whitespace token sequences match. The original formatting and each decoding route remain separate below.</p>';
+        else if (result.reason) output += `<p class="mj-meta">${escape(result.reason)}. The original results and recipes are still available below.</p>`;
+        output += "</div>";
+    }
+    if (groups.length > 8) output += `<p class="mj-meta">Comparing the first 8 of ${groups.length} retained texts. Additional outputs are not compared here.</p>`;
+    return output + "</details>";
+}
+
 /** Put a reproducible action above its evidence preview. */
 function resultCard(group, index, count, context) {
     // Prefer the bounded payload replay for the action, not an unbounded native alternative.
-    const source = group.sources.find(item => item.recipe.some(step => /^(Raw|Zlib) Inflate Bounded$/.test(step.op)) && item.payloadAction) || group.sources[0];
+    const source = preferredSource(group);
     const role = group.role || "JSON result";
     return '<article class="mj-card"><div class="mj-head">' +
         `<h3>${count > 1 ? `Result ${index + 1} · ` : ""}${escape(role)}</h3>` +
@@ -173,6 +213,7 @@ export function presentJsonInvestigation(report, context) {
     // With exactly one card, do not repeat its own warning above it.
     const attached = new Set(count === 1 ? report.outputs[0].interpretationWarnings || [] : []);
     output += warnings((report.interpretationWarnings || []).filter(note => !attached.has(note)));
+    output += presentJsonComparison(report.outputs);
     output += report.outputs.slice(0, 32).map((group, index) => resultCard(group, index, count, context)).join("");
     if (count > 32) output += `<p>Showing 32 of ${count} different checked outputs.</p>`;
     if (!count) output += "<p>Try another decoder, or return to Any for the original general-purpose search. In this combined mode, a crib can exclude otherwise valid JSON.</p>";
@@ -201,6 +242,7 @@ export function presentJsonWrappers(report, context) {
     else if (report.reason) output += `<p>${escape(report.reason)}</p>`;
     const attached = new Set(accepted.length === 1 ? accepted[0].interpretationWarnings || [] : []);
     output += warnings((report.interpretationWarnings || []).filter(note => !attached.has(note)));
+    output += presentJsonComparison(accepted.map(candidate => ({text: candidate.evidence.text, role: candidate.resultRole, sources: [candidate]})));
     for (const [index, candidate] of accepted.entries()) output += resultCard({
         role: candidate.resultRole || "Possible token payload", text: candidate.evidence.text,
         byteLength: candidate.evidence.byteLength ?? new TextEncoder().encode(candidate.evidence.text).byteLength,
@@ -239,13 +281,15 @@ export function presentPayloadTrail(report, context) {
     let output = '<section class="magic-json" data-magic-trail-report="true">' + styles +
         "<h2>Follow the payload</h2>" + `<p class="mj-status">${escape(title)}</p>` +
         '<p class="mj-trust"><strong>Decoded, not verified.</strong> A deeper layer is not a more trustworthy one. Signatures and claims remain unverified.</p>';
+    output += '<p class="mj-meta">Depth sets the layer limit. Crib, intensive mode and language settings are not used.</p>';
     if (report.status !== "complete") output += '<div class="mj-warning" role="note"><strong>Search stopped early.</strong> ' +
         `Reason: ${escape(report.reason || report.status)}. Any results below were checked before the stop; the search is incomplete.</div>`;
     if (report.depthLimited) output += `<p class="mj-meta">Depth ceiling reached (${report.limits.maxDepth} ${report.limits.maxDepth === 1 ? "layer" : "layers"}). Further layers were not examined.</p>`;
-    for (const group of report.outputs) {
+    output += presentJsonComparison(report.outputs, true);
+    for (const [index, group] of report.outputs.entries()) {
         const source = group.sources[0];
         output += '<article class="mj-card"><div class="mj-head">' +
-            `<h3>${source.depth ? `Layer ${source.depth} · JSON reached via ${escape(source.kind)}` : "Original input · complete JSON"}</h3>` +
+            `<h3>${count > 1 ? `Result ${index + 1} · ` : ""}${source.depth ? `Layer ${source.depth} · JSON reached via ${escape(source.kind)}` : "Original input · complete JSON"}</h3>` +
             `<p class="mj-meta">${escape(compressionCue(group.sources))} · ${group.byteLength} bytes · exact text retained</p>` + warnings(source.warnings) +
             '<div class="mj-actions">' + `<a class="mj-action" href="${context.recipeUrl(source.recipe)}">${source.depth ? "Load full JSON recipe" : "Keep original JSON"}</a>` +
             '<span class="mj-action-note">Replaces Magic. Input stays unchanged.</span></div></div><div class="mj-body">' +

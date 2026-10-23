@@ -73,4 +73,8 @@ test("two valid interpretations remain separate instead of selecting the most re
     assert.ok(report.outputs.some(output => output.text === input));
     assert.ok(report.outputs.some(output => output.text === '{"note":"ABCD"}'));
     assert.match(operation.present(), /different JSON outputs/);
+    assert.match(operation.present(), /Compare 2 checked texts/);
+    assert.match(operation.present(), /JSON token text differs/);
+    assert.match(operation.present(), /%41%42%43%44/);
+    assert.match(operation.present(), /ABCD/);
 });

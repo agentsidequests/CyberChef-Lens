@@ -49,6 +49,9 @@ Available now:
 - **JSON payload trail:** compose recognized transport and container layers,
   inspect intermediate text, and load a complete recipe for any reached layer.
   Different JSON layers remain separate; deeper is not more trustworthy.
+- **Lossless JSON inspection:** format strict JSON without rounding numbers or
+  dropping duplicate members; compare the formatted texts with an opt-in Diff
+  mode. Lens also locates the first changed token across checked results.
 - Replays native candidate recipes on complete input and checks strict UTF-8 and
   whole-document JSON, instead of accepting a valid-looking prefix.
 - Retains competing exact texts and recipe provenance. A syntax match does not
@@ -87,11 +90,50 @@ strings inside an existing JSON document. Depth means logical layers, from
 cooperative-time limits are explicit in the result. It is not an exhaustive
 search or a hard resource sandbox.
 
+## A formatter should not change the evidence
+
+These are different account numbers:
+
+```text
+{"account":9007199254740992}
+
+{"account":9007199254740993}
+```
+
+Parsing both through an ordinary JavaScript number and writing them back can
+make them identical. Repeated object members can disappear in the same trip.
+For an investigation, that is a poor time to tidy up.
+
+In **JSON Beautify**, enable **Lossless strict JSON**. It copies the original
+number, string and punctuation tokens, replacing only insignificant whitespace.
+The two account numbers stay different. Repeated members, escape spelling and
+member order remain intact. This mode accepts strict JSON, not JSON5, and does
+not sort keys.
+
+For a full comparison, select **Diff → JSON (lossless)** and supply two documents
+separated by your sample delimiter. The example above uses the default blank-line
+delimiter. Or use **Compare checked texts** in a Lens
+investigation to locate the first differing token. A formatting-only match does
+not merge the original results or choose a decoding route.
+
+Native Character Diff and raw JSON Diff already preserve differences in these
+source strings. The addition is a lossless formatting-and-comparison workflow
+and an integrated review, not a claim that native Diff cannot find the change.
+Member order, numeric spelling and string escapes stay significant here; the
+comparison does not decide semantic equivalence or authenticate either message.
+
+The new text-inspection paths are bounded to 64 KiB per document, 16,384 tokens
+and 64 nested containers. Formatting output is capped at 1 MiB. Lens compares
+at most eight retained texts against one explicit reference and shows only the
+first changed token. The opt-in full Diff has cooperative work limits and
+refuses a completion claim if it cannot finish.
+
 ## Roadmap
 
-The experimental JSON investigation and multi-layer payload trail are available
-with portable tests and a source build. Clean-install CI still needs a completed
-remote run. Broader encoding coverage and stronger resource isolation need their
+The experimental JSON investigation, multi-layer payload trail and lossless JSON
+inspection are available with portable tests and a source build. Clean-install
+CI still needs a completed remote run. Broader encoding coverage and stronger
+resource isolation need their
 own evidence before they are advertised; no delivery date is promised.
 
 ## Run from source

@@ -135,4 +135,22 @@ TestRegister.addTests([
             }
         ],
     },
+    {
+        name: "JSON Beautify: lossless numeric spelling, duplicate members and escapes",
+        input: '{"n":9007199254740993,"n":1e400,"escape":"\\u0061"}',
+        expectedMatch: /Lossless strict JSON[\s\S]+9007199254740993[\s\S]+1e400[\s\S]+\\u0061/,
+        recipeConfig: [{op: "JSON Beautify", args: ["  ", false, true, true]}]
+    },
+    {
+        name: "JSON Beautify: lossless mode refuses key sorting",
+        input: '{"b":2,"a":1}',
+        expectedOutput: "Lossless JSON preserves member order. Turn off Sort Object Keys or leave lossless mode.",
+        recipeConfig: [{op: "JSON Beautify", args: ["  ", true, true, true]}]
+    },
+    {
+        name: "JSON Beautify: lossless mode refuses JSON5",
+        input: "{unquoted:1}",
+        expectedOutput: "Lossless mode requires a complete strict JSON document; JSON5 syntax is not supported.",
+        recipeConfig: [{op: "JSON Beautify", args: ["  ", false, true, true]}]
+    },
 ]);
