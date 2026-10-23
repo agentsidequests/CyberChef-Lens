@@ -1,9 +1,9 @@
 # Additional third-party notices for this fork
 
-This file covers the newly added package only; it is not a complete inventory
-of CyberChef's existing dependencies. CyberChef's original license, copyrights
-and notices remain intact. Standalone packages include this file and the root
-Apache-2.0 license alongside the application.
+This file covers the added Pako package and modified node-forge component;
+it is not a complete inventory of CyberChef's existing dependencies. CyberChef's
+original license, copyrights and notices remain intact. Standalone packages
+include this file and the root Apache-2.0 license alongside the application.
 
 ## Pako 3.0.2
 
@@ -57,3 +57,43 @@ freely, subject to the following restrictions:
 2. Altered source versions must be plainly marked as such, and must not be
    misrepresented as being the original software.
 3. This notice may not be removed or altered from any source distribution.
+
+## Node-forge 1.4.0 — local RSA validation backport
+
+Source: https://github.com/digitalbazaar/forge/tree/v1.4.0
+
+The published package is locally modified by the hash-guarded
+`src/core/config/scripts/fixForgeRsaValidation.mjs`. It adds the nested
+DigestAlgorithm element-count check from upstream candidate
+https://github.com/digitalbazaar/forge/pull/1152, commit
+`ceba34402e329f0365134f23fe19898756527d65`. This is a fork backport, not an
+official patched release; the package version remains 1.4.0.
+Node-forge is dual-licensed BSD-3-Clause OR GPL-2.0; this distribution uses
+the BSD-3-Clause option below.
+
+### New BSD License (3-clause)
+
+Copyright (c) 2010, Digital Bazaar, Inc.
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+    * Redistributions of source code must retain the above copyright
+      notice, this list of conditions and the following disclaimer.
+    * Redistributions in binary form must reproduce the above copyright
+      notice, this list of conditions and the following disclaimer in the
+      documentation and/or other materials provided with the distribution.
+    * Neither the name of Digital Bazaar, Inc. nor the
+      names of its contributors may be used to endorse or promote products
+      derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL DIGITAL BAZAAR BE LIABLE FOR ANY
+DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.

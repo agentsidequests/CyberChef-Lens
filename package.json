@@ -219,7 +219,7 @@
     "testuidev": "npx nightwatch --env=dev",
     "lint": "npx grunt lint",
     "lint:grammar": "cspell ./src",
-    "postinstall": "npx grunt exec:fixCryptoApiImports && npx grunt exec:fixSnackbarMarkup",
+    "postinstall": "npx grunt exec:fixCryptoApiImports && npx grunt exec:fixSnackbarMarkup && npx grunt exec:fixForgeRsaValidation",
     "newop": "node src/core/config/scripts/newOperation.mjs",
     "minor": "node src/core/config/scripts/newMinorVersion.mjs && npm version minor --git-tag-version=false && echo \"Updated to version v$(npm pkg get version | xargs), please create a pull request and once merged use 'npm run tag'\"",
     "tag": "git tag -s \"v$(npm pkg get version | xargs)\" -m \"$(npm pkg get version | xargs)\" && echo \"Created v$(npm pkg get version | xargs), now check and push the tag\"",

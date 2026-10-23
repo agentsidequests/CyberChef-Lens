@@ -89,6 +89,9 @@ locally to review the production build; `npm start` runs the development server.
 The preparation command runs the inspected source generators and compatibility
 fixes, not dependency lifecycle hooks or a browser installer. The check-only CI
 workflow does not deploy or publish anything; an actual remote run is separate.
+Preparation and normal builds enforce a reviewed local RSA-verification guard
+for node-forge 1.4.0. Unknown versions or modified bytes require review; see
+[security limits](docs/SECURITY-LIMITS.md#dependency-advisories--reviewed-october-23-2026).
 
 ## Built on CyberChef
 

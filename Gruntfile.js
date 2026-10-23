@@ -381,6 +381,7 @@ module.exports = function (grunt) {
             },
             generateConfig: {
                 command: chainCommands([
+                    `node ${nodeFlags} src/core/config/scripts/fixForgeRsaValidation.mjs`,
                     "echo '\n--- Regenerating config files. ---'",
                     "echo [] > src/core/config/OperationConfig.json",
                     `node ${nodeFlags} src/core/config/scripts/generateHTMLEntities.mjs`,
@@ -438,6 +439,10 @@ module.exports = function (grunt) {
             },
             fixSnackbarMarkup: {
                 command: `node ${nodeFlags} src/core/config/scripts/fixSnackBarMarkup.mjs`,
+                stdout: false
+            },
+            fixForgeRsaValidation: {
+                command: `node ${nodeFlags} src/core/config/scripts/fixForgeRsaValidation.mjs`,
                 stdout: false
             },
         },

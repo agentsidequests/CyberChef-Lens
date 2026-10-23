@@ -11,6 +11,7 @@ if (!existsSync(new URL("../src/core/config/OperationConfig.json", import.meta.u
 for (const script of [
     "src/core/config/scripts/fixCryptoApiImports.mjs",
     "src/core/config/scripts/fixSnackBarMarkup.mjs",
+    "src/core/config/scripts/fixForgeRsaValidation.mjs",
     "src/core/config/scripts/generateHTMLEntities.mjs",
     "src/core/config/scripts/generateOpsIndex.mjs",
     "src/core/config/scripts/generateConfig.mjs",

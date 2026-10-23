@@ -224,10 +224,21 @@ upgrade or claim that all inherited risks are resolved is made.
   Boundary regressions and the native Render Markdown fixtures pass.
   [HTML-specific](https://github.com/advisories/GHSA-vfgh-jcmw-g37q),
   [default options](https://github.com/advisories/GHSA-gfr2-rv44-r23c).
-- Node-forge 1.4.0 has an RSA signature-verification advisory with no patched
-  version listed at review. The JSON feature does not verify signatures; that
-  does not dispose of the risk in unrelated inherited operations.
-  [Advisory](https://github.com/advisories/GHSA-86w9-cpqp-85rv).
+- Node-forge remains version 1.4.0, with no released patched version listed at
+  review. This fork backports the nested DigestAlgorithm element-count guard
+  from [upstream candidate #1152](https://github.com/digitalbazaar/forge/pull/1152),
+  commit `ceba34402e329f0365134f23fe19898756527d65`. The install/preparation/build
+  helper accepts only the reviewed original or patched file hashes and refuses
+  another version, unknown bytes or linked/shared dependency targets. A future
+  official upgrade requires review rather than automatic application.
+  RSA Verify regressions cover 14 extra nested-element cases across five hash
+  algorithms, canonical valid signatures and changed-message failures using
+  already-public test keys. This is a narrow validation backport, not a complete
+  cryptographic or DER-conformance review. Omitted-NULL compatibility remains;
+  some cases differ from OpenSSL. The package version and lockfile are unchanged,
+  so the audit still reports the high-rated
+  [advisory](https://github.com/advisories/GHSA-86w9-cpqp-85rv).
+  The JSON investigation modes do not verify signatures.
 
 DOMPurify, Markdown-it and the added Pako 3.0.2 alias were not listed in the
 patched audit. Absence from an advisory list is not a security guarantee.
