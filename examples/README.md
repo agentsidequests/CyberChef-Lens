@@ -58,8 +58,13 @@ The examples require no network service, key or API account.
 
 When pasting one paired Cookie field directly, one terminal LF or CRLF is
 accepted. The saved original input keeps that ending; extracted payload bytes
-are unchanged. Do not paste a complete request or folded/multiline headers.
+are unchanged. That field-only profile refuses complete requests or folded/multiline headers.
 Blank lines, bare CR, quoted values and duplicate Cookie names remain refused.
+For a complete request use **Lens workspace → Try an HTTP request**, or load
+`lens-http-request.txt`. Its Authorization payload says `queued` and its body
+says `released`; both remain separate results. No signature is genuine and no
+request is sent. The [request guide](../docs/USAGE.md#whole-copied-http-requests)
+describes accepted framing and refusal cases.
 
 ## A copied Authorization field
 

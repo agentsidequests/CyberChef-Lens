@@ -153,6 +153,24 @@ remain. No network request, key lookup, signature verification, authorization,
 issuer, schema or claim validation is performed. Generic arrays are not JWT
 Claims Set objects. No new general-purpose Magic recognizer is added.
 
+## Whole copied HTTP request boundary
+
+Only the original input to the payload trail is eligible for the HTTP/1.x
+request profile. At most three native byte slices (Authorization, Cookie, body)
+are considered after complete framing checks. The full original input remains
+the replay witness. Identical text at different field offsets has separate
+bounded states/routes; global state, replay, depth, output and time budgets still
+apply. A refusal yields no partial extraction from that request.
+
+Header values are restricted to ASCII, with consistent LF or CRLF and finite
+line/field limits. Repeated framing/carrier singleton fields, folding,
+Transfer-Encoding and encoded request bodies are refused. A nonempty body needs
+an exact UTF-8 Content-Length match. This is a read-only copied-text profile,
+not wire parsing, HTTP conformance validation or an application security verdict.
+Header/body locations and saved evidence are unauthenticated claims about the
+copied text. A saved request can contain credentials in unrelated headers too;
+exports remain unredacted. No network request is issued by this profile.
+
 ## Copied Cookie field endings
 
 One unquoted paired Cookie field or Cookie-pair value may end with one LF or

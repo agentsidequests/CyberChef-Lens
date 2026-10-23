@@ -22,7 +22,7 @@ export default function setupLensWorkspace() {
         <button type="button" id="lw-close">Recipe workspace ↗</button></header>
         <main><div class="lw-intro"><p class="lw-eyebrow">GUIDED WORKSPACE</p>
         <h1>Follow the JSON. Keep the evidence.</h1>
-        <p>Find JSON inside supported encoded layers, inspect the cautions, and carry the exact result forward.</p></div>
+        <p>Find JSON in encoded data or a whole copied HTTP request, inspect the cautions, and carry the exact result forward.</p></div>
         <div class="lw-mode" role="group" aria-label="Investigation task">
         <button type="button" id="lw-single" aria-pressed="true">Investigate data</button>
         <button type="button" id="lw-pair" aria-pressed="false">Compare two captures</button></div>
@@ -30,6 +30,7 @@ export default function setupLensWorkspace() {
         <div class="lw-run"><button type="button" id="lw-run" class="lw-primary">Find JSON</button>
         <button type="button" id="lw-cancel" hidden>Cancel</button>
         <button type="button" id="lw-demo">Try the fictional example</button>
+        <button type="button" id="lw-http-demo">Try an HTTP request</button>
         <details class="lw-depth"><summary>Search settings</summary><label for="lw-depth">Layer limit</label>
         <select id="lw-depth"><option>1</option><option>2</option><option selected>3</option><option>4</option><option>5</option></select>
         <p>Default: 3 layers. Recognized profiles only, up to 64 KiB per source. Increasing depth does not increase trust.</p></details></div>
@@ -90,7 +91,7 @@ export default function setupLensWorkspace() {
         panel.id = `lw-source-${index}`;
         panel.innerHTML = `<div class="lw-source-title"><label for="lw-input-${index}">Source ${index ? "B" : "A"}</label>
             <button type="button" id="lw-clear-${index}">Clear</button></div>
-            <textarea id="lw-input-${index}" spellcheck="false" placeholder="Paste JSON, an encoded string, or a supported copied field…" aria-describedby="lw-note-${index}"></textarea>
+            <textarea id="lw-input-${index}" spellcheck="false" placeholder="Paste JSON, encoded data, or a complete HTTP/1.x request…" aria-describedby="lw-note-${index}"></textarea>
             <label class="lw-file">Choose a UTF-8 file<input type="file" id="lw-file-${index}" aria-label="Choose source ${index ? "B" : "A"} file"></label>
             <p class="lw-source-note" id="lw-note-${index}">Or drop one text file here · 64 KiB maximum</p>`;
         root.querySelector(".lw-sources").appendChild(panel);
@@ -170,7 +171,8 @@ export default function setupLensWorkspace() {
                 report.outputs.forEach((group, value) => {
                     const option = document.createElement("option");
                     option.value = value;
-                    option.textContent = `Result ${value + 1}: layer ${group.sources[0].depth} · ${group.byteLength} bytes · ${group.sources[0].kind || "original JSON"}`;
+                    const source = group.sources[0];
+                    option.textContent = `Result ${value + 1}: ${source.httpOrigin ? source.httpOrigin.field + " · " : ""}layer ${source.depth} · ${group.byteLength} bytes · ${source.kind || "original JSON"}`;
                     select.appendChild(option);
                 });
                 select.addEventListener("change", () => {
@@ -185,7 +187,7 @@ export default function setupLensWorkspace() {
             const comparison = document.createElement("div"); comparison.id = "lw-comparison"; controls.appendChild(comparison);
             target.prepend(controls);
         }
-        status(`${reports.map((report, index) => `Source ${index ? "B" : "A"}: ${report.outputs.length} JSON layer(s), ${report.status}${report.depthLimited ? ", layer limit reached" : ""}`).join(". ")}. Inspect the cautions before using a result.`);
+        status(`${reports.map((report, index) => `Source ${index ? "B" : "A"}: ${report.outputs.length} JSON layer(s), ${report.httpRequest?.status === "unsupported" ? "HTTP import refused" : report.status}${report.depthLimited ? ", layer limit reached" : ""}`).join(". ")}. Inspect the cautions before using a result.`);
         target.scrollIntoView({block: "start"});
         target.querySelector("h2").focus({preventScroll: true});
     }
@@ -244,6 +246,18 @@ export default function setupLensWorkspace() {
         sourceNote(0, "Fictional three-layer sample · fabricated signatures");
         get("lw-depth").value = "3";
         status("Fictional example loaded. Choose Find JSON to follow its three layers.");
+    });
+    get("lw-http-demo").addEventListener("click", () => {
+        setMode(false); sources[0].revision++;
+        const payload = '{"case":"HTTP-204","status":"queued"}';
+        const token = btoa('{"alg":"HS256"}').replace(/=+$/, "") + "." + btoa(payload).replace(/=+$/, "") + "." + "A".repeat(43);
+        const body = '{"case":"HTTP-204","status":"released"}\n';
+        sources[0].text = "POST /jobs HTTP/1.1\nHost: example.invalid\nAuthorization: Bearer " + token +
+            "\nContent-Type: application/json\nContent-Length: " + new TextEncoder().encode(body).length + "\n\n" + body;
+        get("lw-input-0").value = sources[0].text;
+        sourceNote(0, "Fictional HTTP request · fabricated signature · header and body deliberately disagree");
+        get("lw-depth").value = "3";
+        status("HTTP example loaded. Find JSON to inspect the Authorization payload and body as separate results.");
     });
     opener.addEventListener("click", () => {
         native.hidden = true; root.hidden = false; get("lw-input-0").focus();

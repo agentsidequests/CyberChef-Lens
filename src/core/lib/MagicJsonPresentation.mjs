@@ -313,6 +313,13 @@ function trailSteps(source, report, context) {
     }).join("") + "</ol>" : "<p>The original input is already a complete JSON object or array.</p>";
 }
 
+/** Source coordinates describe this copied text, not an authenticated capture. */
+function httpLocation(source) {
+    const origin = source.httpOrigin;
+    return origin ? `<p class="mj-meta"><strong>Request source: ${escape(origin.field)}</strong> · line ${escape(origin.line)} · ` +
+        `UTF-8 bytes ${escape(origin.byteOffset)}–${escape(origin.byteOffset + origin.byteLength - 1)} (zero-based)</p>` : "";
+}
+
 /** A bounded decoding trail, not a confidence score or authentication verdict. */
 export function presentPayloadTrail(report, context) {
     const count = report.outputs.length;
@@ -323,6 +330,14 @@ export function presentPayloadTrail(report, context) {
         "<h2>Follow the payload</h2>" + `<p class="mj-status">${escape(title)}</p>` +
         '<p class="mj-trust"><strong>Decoded, not verified.</strong> A deeper layer is not a more trustworthy one. Signatures and claims remain unverified.</p>';
     output += '<p class="mj-meta">Depth sets the layer limit. Crib, intensive mode and language settings are not used.</p>';
+    if (report.httpRequest) {
+        const request = report.httpRequest;
+        output += request.status === "supported" ? '<p class="mj-status">Complete copied HTTP request · ' +
+            `${escape(request.headerCount)} headers · ${escape(request.bodyBytes)} body bytes. ` +
+            "Examined Authorization, Cookie and the framed body when present. Other headers and query/form fields were not searched. No request was sent.</p>" :
+            '<div class="mj-warning" role="note"><strong>HTTP request not imported.</strong> ' +
+            `${escape(request.reason)} Keep the original and inspect a supported field or decoded body separately.</div>`;
+    }
     if (report.status !== "complete") output += '<div class="mj-warning" role="note"><strong>Search stopped early.</strong> ' +
         `Reason: ${escape(report.reason || report.status)}. Any results below were checked before the stop; the search is incomplete.</div>`;
     if (report.depthLimited) output += `<p class="mj-meta">Depth ceiling reached (${report.limits.maxDepth} ${report.limits.maxDepth === 1 ? "layer" : "layers"}). Further layers were not examined.</p>`;
@@ -331,7 +346,8 @@ export function presentPayloadTrail(report, context) {
         const source = group.sources[0];
         output += '<article class="mj-card"><div class="mj-head">' +
             `<h3>${count > 1 ? `Result ${index + 1} · ` : ""}${source.depth ? `Layer ${source.depth} · JSON reached via ${escape(source.kind)}` : "Original input · complete JSON"}</h3>` +
-            `<p class="mj-meta">${escape(compressionCue(group.sources))} · ${group.byteLength} bytes · exact text retained</p>` + warnings(source.warnings) +
+            `<p class="mj-meta">${escape(compressionCue(group.sources))} · ${group.byteLength} bytes · exact text retained</p>` +
+            httpLocation(source) + warnings(source.warnings) +
             presentJsonHazards(group.text) +
             '<div class="mj-actions">' + `<a class="mj-action" href="${context.recipeUrl(source.recipe)}">${source.depth ? "Load full JSON recipe" : "Keep original JSON"}</a>` +
             '<span class="mj-action-note">Replaces Magic. Input stays unchanged.</span></div></div><div class="mj-body">' +
@@ -340,7 +356,7 @@ export function presentPayloadTrail(report, context) {
             "<details><summary>Full recipe and arguments</summary>" + chain(source.recipe) +
             pre(Utils.generatePrettyRecipe(source.recipe, true) || "Original input (no decoding)", "Full recipe and arguments") + "</details>";
         if (group.sources.length > 1) output += "<details><summary>Other recipes for this exact text</summary>" +
-            group.sources.slice(1).map(alternative => warnings(alternative.warnings) +
+            group.sources.slice(1).map(alternative => httpLocation(alternative) + warnings(alternative.warnings) +
                 `<p><a href="${context.recipeUrl(alternative.recipe)}">Load alternative ${alternative.depth}-layer recipe</a></p>` +
                 chain(alternative.recipe) + pre(Utils.generatePrettyRecipe(alternative.recipe, true), "Alternative recipe and arguments")).join("") +
             '<p class="mj-meta">Matching text from another route is not independent corroboration.</p></details>';
@@ -354,7 +370,7 @@ export function presentPayloadTrail(report, context) {
         `<p>Limits: ${report.limits.maxDepth} layers, ${report.limits.maxStates} states, ${report.limits.maxReplays} replays, ` +
         `${report.limits.maxRetainedBytes} retained state bytes and ${report.limits.maxOutputBytes} bytes per output. ` +
         `${report.limits.maxMillis / 1000} cooperative seconds after module preparation. Checks occur between native executions; this is not a hard CPU or process-memory sandbox.</p>` +
-        "<p>Only recognized Base64, hexadecimal, percent-encoding and guarded container profiles are followed. No generic Magic search, arbitrary JSON-field rewriting, decryption, key guessing or signature verification. " +
+        "<p>Only recognized Base64, hexadecimal, percent-encoding, whole copied HTTP/1.x requests and guarded container profiles are followed. HTTP import requires consistent ASCII headers and unambiguous UTF-8 Content-Length framing for a nonempty body; chunked/encoded bodies and ambiguous or folded fields are refused. HTTP extraction uses one layer. No generic Magic search, arbitrary JSON-field rewriting, decryption, key guessing or signature verification. " +
         "Intensive mode, language and crib do not apply. Original/expandable inputs are limited to 64 KiB. Every offered recipe was replayed on the complete input to this Magic step; surrounding recipe steps remain in place.</p>" +
         (report.stops.length ? "<ul>" + report.stops.map(stop => `<li>${stop.node === undefined ? "" : `State ${stop.node}: `}${escape(stop.reason)}` +
             (stop.detail ? ` — ${escape(stop.detail)}` : "") + "</li>").join("") + "</ul>" : "<p>No additional stop or refusal was recorded within these profiles.</p>") +

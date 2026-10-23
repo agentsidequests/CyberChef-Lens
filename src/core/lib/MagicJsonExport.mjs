@@ -35,12 +35,12 @@ export function createJsonEvidence(group, {report, mode, index, count}) {
             checkedReplays: report.checkedReplays ?? null,
             checked: report.checked ?? null, total: report.total ?? null,
             native: routeSummary(report.native), wrappers: routeSummary(report.wrappers),
-            stops: report.stops || []},
+            httpRequest: report.httpRequest, stops: report.stops || []},
         result: {text: group.text, byteLength: ENCODER.encode(group.text).length,
             role: group.role || "Checked JSON layer", warnings: notes,
             parsingCautions: inspectJsonHazards(group.text),
             routes: group.sources.map(source => ({route: source.route, kind: source.kind,
-                depth: source.depth, nativeRank: source.nativeRank, recipe: source.recipe,
+                depth: source.depth, nativeRank: source.nativeRank, recipe: source.recipe, httpOrigin: source.httpOrigin,
                 warnings: [...(source.warnings || []), ...(source.interpretationWarnings || [])]}))}
     };
     const text = JSON.stringify(evidence, null, 2) + "\n";

@@ -34,6 +34,48 @@ Base64 carrier to preserve line endings before the saved decoding steps.
 Saved evidence retains the original source, not that presentation carrier.
 Neither route authenticates input. The same profile and work limits apply.
 
+## Whole copied HTTP requests
+
+Paste or load one complete **HTTP/1.0 or HTTP/1.1 request** into the guided
+workspace, including its request line and the blank line after its headers.
+**Try an HTTP request** loads a fictional Authorization token and body with
+different `status` values. Find JSON, then inspect the separate results; Lens
+does not choose which value the application would use. The same import works
+in **Magic → JSON payload trail**, not in the wrapper-only or combined modes.
+
+Lens checks up to three sources: the **Authorization** header through the existing
+Bearer profile, the **Cookie** header through the existing paired-cookie profile,
+and the **body** through supported JSON/transport/container profiles. Other
+headers, request targets, query parameters and form fields are not searched.
+Field extraction consumes one layer; increase the layer limit only when the
+remaining encoding needs it. Equal payload text shares a result card, while its
+different field locations and replay recipes remain under **Other recipes for
+this exact text**. Matching text is not independent corroboration.
+
+Source lines are one-based; byte ranges are zero-based UTF-8 offsets in the
+complete copied request. The offered **Take bytes** prefix extracts that exact
+field or body before decoding. Saved evidence keeps the complete original
+request, these coordinates and each result recipe. Coordinates describe the
+copied text, not a verified wire capture, and imported evidence remains editable.
+
+This narrow profile accepts consistent LF or CRLF headers with ASCII values,
+at most 128 fields and 8192 bytes per line. HTTP/1.1 needs one nonempty Host.
+A nonempty body needs one decimal **Content-Length** matching every remaining
+UTF-8 byte; Unicode characters can occupy several bytes. File input preserves
+CRLF. Editing/pasting may change body line endings, so a mismatched length is
+refused rather than repaired. Prefer the original UTF-8 capture file when exact
+body bytes matter.
+
+Folded headers, repeated Host/Authorization/Cookie/Content-Length/Content-Encoding/
+Transfer-Encoding fields, mixed header line endings, Transfer-Encoding (including
+chunked), and non-identity Content-Encoding are refused before any extraction.
+HTTP/2, responses, HAR and curl are outside this profile. Requests nested inside
+an encoded source are not recursively recognized. Retain the original and inspect
+a separately decoded body or supported individual field when import is refused.
+The profile is not a complete HTTP conformance or request-smuggling detector.
+The framing rules follow [RFC 9112 sections 3, 5 and 6](https://www.rfc-editor.org/rfc/rfc9112.html),
+with stricter refusal for ambiguous copied input. **No request is sent.**
+
 ## Recipe workspace goals
 
 | Goal | Search and settings |
@@ -172,7 +214,8 @@ remain outside this profile. General-purpose **Any** is unchanged.
 For a paired Cookie field, one copied terminal LF or CRLF is accepted too. The
 complete original input, including that ending, remains in the evidence record;
 native replay extracts the exact payload without rewriting it. This still means
-one unquoted field or Cookie-pair value, not a whole request: header blocks,
+one unquoted field or Cookie-pair value. For a whole request, use the separate
+request import in the guided workspace or payload trail. This field profile refuses header blocks,
 folded lines, extra blank lines, bare CR and duplicate names are refused.
 
 ## Take an investigation with you

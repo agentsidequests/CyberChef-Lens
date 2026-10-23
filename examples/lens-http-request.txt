@@ -1,0 +1,7 @@
+POST /jobs HTTP/1.1
+Host: example.invalid
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJjYXNlIjoiSFRUUC0yMDQiLCJzdGF0dXMiOiJxdWV1ZWQifQ.AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+Content-Type: application/json
+Content-Length: 40
+
+{"case":"HTTP-204","status":"released"}

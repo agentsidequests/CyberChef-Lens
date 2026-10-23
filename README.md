@@ -18,6 +18,11 @@ file/paste inputs and explicit layer choices, without a recipe or delimiter.
 Result cards retain their decoding trails, parsing cautions and evidence saves.
 Your existing recipe workspace stays available through **Recipe workspace**.
 
+You can also paste one **complete HTTP/1.x request**. **Try an HTTP request**
+loads a fictional example whose Authorization payload and JSON body disagree.
+Results show each field's source line and UTF-8 byte range; the original request
+and full replay recipes stay together. [Supported request framing](docs/USAGE.md#whole-copied-http-requests).
+
 In the built app, open **Lens guide / Help** at the top right, then choose
 **Open the three-layer demo (new tab)**. It opens a separate workspace; your
 current input and recipe stay where they are.

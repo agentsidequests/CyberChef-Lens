@@ -8,6 +8,7 @@
 import {validateJsonDocument} from "./MagicEvidence.mjs";
 import {inspectJsonWrappers} from "./MagicWrappers.mjs";
 import {hasDuplicateJsonMembers} from "./MagicCarriers.mjs";
+import {inspectHttpRequest} from "./LensHttpRequest.mjs";
 
 const ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
 const copyRecipe = recipe => recipe.map(step => ({op: step.op, args: JSON.parse(JSON.stringify(step.args))}));
@@ -140,12 +141,17 @@ export async function investigatePayloadTrail(input, {replay, prepare, maxDepth=
         } catch {
             report.stops.push({node: source.parentId, reason: "invalid-utf8"}); return;
         }
-        const old = retained.get(text);
+        // Identical fields in one HTTP request still have distinct locations
+        // and native slice recipes. Do not discard their downstream witnesses.
+        const key = JSON.stringify([text, source.httpOrigin || null]);
+        const old = retained.get(key);
         if (old) {
             if (source.hops.length) source.hops.at(-1).nodeId = old.id;
             const different = !old.sources.some(item => JSON.stringify(item.recipe) === JSON.stringify(source.recipe));
-            if (different && old.sources.length < 4) old.sources.push(source);
-            else if (different) report.stops.push({node: old.id, reason: "alternative-route-limit"});
+            if (different && old.sources.length < 4) {
+                old.sources.push(source);
+                outputs.get(text)?.sources.push(source);
+            } else if (different) report.stops.push({node: old.id, reason: "alternative-route-limit"});
             return;
         }
         if (report.nodes.length >= maxStates) {
@@ -157,13 +163,14 @@ export async function investigatePayloadTrail(input, {replay, prepare, maxDepth=
         const node = {id: report.nodes.length, byteLength: bytes.length, text, sources: [source]};
         if (source.hops.length) source.hops.at(-1).nodeId = node.id;
         report.nodes.push(node);
-        retained.set(text, node);
+        retained.set(key, node);
         buffers.set(node.id, bytes.slice());
         report.retainedBytes += bytes.length;
         const evidence = validateJsonDocument(bytes, maxOutputBytes);
         node.evidence = {status: evidence.status};
         if (evidence.status === "passed") {
-            const output = {nodeId: node.id, text, byteLength: bytes.length, sources: node.sources};
+            const output = outputs.get(text) || {nodeId: node.id, text, byteLength: bytes.length, sources: []};
+            output.sources.push(source);
             outputs.set(text, output);
         }
     };
@@ -201,13 +208,30 @@ export async function investigatePayloadTrail(input, {replay, prepare, maxDepth=
                 captured.set(JSON.stringify(local), output);
                 return output;
             };
-            const follow = (local, output, kind, warnings=[]) => {
+            const follow = (local, output, kind, warnings=[], httpOrigin=source.httpOrigin) => {
                 if (!output || sameBytes(output, bytes)) return;
                 const recipe = copyRecipe(source.recipe.concat(local));
-                remember(output, {recipe, depth: source.depth + 1, parentId: node.id, kind,
+                remember(output, {recipe, depth: source.depth + 1, parentId: node.id, kind, httpOrigin,
                     warnings: [...new Set(source.warnings.concat(warnings))],
                     hops: source.hops.concat({kind, inputBytes: bytes.length, outputBytes: output.length, recipe: copyRecipe(recipe)})});
             };
+            // HTTP framing is eligible only for the original source, not a
+            // recursively embedded request or an arbitrary request substring.
+            if (cursor === 0) {
+                const request = inspectHttpRequest(node.text);
+                if (request.status !== "not-request") {
+                    report.httpRequest = {status: request.status, reason: request.reason,
+                        method: request.method, headerCount: request.headerCount, bodyBytes: request.bodyBytes,
+                        fields: request.candidates.map(candidate => candidate.httpOrigin)};
+                    if (request.status === "unsupported") report.stops.push({node: node.id, reason: "http-request-refusal", detail: request.reason});
+                    for (const candidate of request.candidates) {
+                        const output = await execute(candidate.recipe);
+                        follow(candidate.recipe, output, candidate.kind, [], candidate.httpOrigin);
+                    }
+                    await new Promise(resolve => setTimeout(resolve, 0));
+                    continue;
+                }
+            }
             const wrappers = await inspectJsonWrappers(bytes, execute, {prepare, signal,
                 maxOutputBytes, maxCandidates: 3, maxMillis: Math.max(0, maxMillis - (performance.now() - start))});
             check();
