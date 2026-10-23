@@ -155,6 +155,7 @@ module.exports = function (grunt) {
                         compileYear: compileYear,
                         compileTime: compileTime,
                         version: version,
+                        lensExampleInput: fs.readFileSync("examples/lens-investigation.txt").toString("base64"),
                         latestReleaseVersion: pkg.version,
                         downloadZipFilename: downloadZipFilename,
                         minify: {
@@ -261,6 +262,7 @@ module.exports = function (grunt) {
                         compileYear: compileYear,
                         compileTime: compileTime,
                         version: pkg.version,
+                        lensExampleInput: fs.readFileSync("examples/lens-investigation.txt").toString("base64"),
                     })
                 ]
             }

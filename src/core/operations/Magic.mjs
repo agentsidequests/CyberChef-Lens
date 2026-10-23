@@ -63,6 +63,7 @@ class Magic extends Operation {
             {
                 "name": "Output goal",
                 "type": "option",
+                "hint": "Any: general search. JSON object or array: combined JSON search. JSON wrappers: one recognized container. JSON payload trail: follow nested layers. See Lens guide / Help for a demo.",
                 "value": ["Any", "JSON object or array", "JSON wrappers", "JSON payload trail"]
             }
         ];

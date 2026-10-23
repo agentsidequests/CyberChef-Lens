@@ -399,8 +399,10 @@ class ControlsWaiter {
      */
     supportButtonClick(e) {
         e.preventDefault();
+        // The visible guide entry always returns to the Lens start, not a prior help tab.
+        $("#tab-1").tab("show");
         const faqs = document.getElementById("faqs");
-        const faqsAElement = faqs.getElementsByTagName("a");
+        const faqsAElement = faqs.querySelectorAll('a[data-toggle="collapse"]');
         for (let i = 0; i < faqsAElement.length; i++) {
             faqsAElement[i].setAttribute("tabindex", "0");
             faqsAElement[i].addEventListener("keydown", this.navigateFAQList, false);
