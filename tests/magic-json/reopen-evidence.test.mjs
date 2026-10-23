@@ -145,12 +145,12 @@ test("payload and saved input recover exactly, without numeric or newline change
 test("recovery links contain only the fixed inspector mode and retain surrounding operations", async () => {
     const {html, prefix, suffix} = await run();
     const recipes = [...html.matchAll(/href="#recipe=([^"]+)"/g)].map(match => Utils.parseRecipeConfig(decodeURIComponent(Utils.unescapeHtml(match[1]))));
-    assert.equal(recipes.length, 2);
+    assert.equal(recipes.length, 3);
     for (const recipe of recipes) {
         assert.deepEqual(recipe[0], prefix);
         assert.deepEqual(recipe.at(-1), suffix);
         assert.equal(recipe[1].op, "Inspect Lens Evidence");
-        assert.ok(["Payload text", "Magic-step input"].includes(recipe[1].args[0]));
+        assert.ok(["Payload text", "Magic-step input", "Verify replay"].includes(recipe[1].args[0]));
         assert.equal(recipe.length, 3);
     }
 });

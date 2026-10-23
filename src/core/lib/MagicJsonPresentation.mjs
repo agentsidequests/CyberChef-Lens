@@ -390,7 +390,8 @@ export function presentLensEvidence(report, context) {
         presentJsonHazards(report.payload) +
         '<p class="mj-meta">Both recovery modes can reveal secrets. They change Output, not Input, and do not run any saved recipe.</p><div class="mj-actions">' +
         `<a class="mj-action" href="${context.recipeUrl("Payload text")}">Recover saved payload</a>` +
-        `<a href="${context.recipeUrl("Magic-step input")}">Recover saved Magic-step input</a></div></div>` +
+        `<a href="${context.recipeUrl("Magic-step input")}">Recover saved Magic-step input</a>` +
+        `<a href="${context.recipeUrl("Verify replay")}">Check saved replay</a></div></div>` +
         '<div class="mj-body">' + preview(report.payload) +
         "<details><summary>Recorded investigation — not rerun</summary>" +
         pre(JSON.stringify(report.investigation, null, 2), "Recorded investigation metadata") + "</details>" +
@@ -402,4 +403,44 @@ export function presentLensEvidence(report, context) {
         report.routes.map((route, index) => "<details>" + `<summary>Saved route ${index + 1}</summary>` +
             pre(JSON.stringify(route.recipe, null, 2), `Saved route ${index + 1} recipe`) + "</details>").join("") + "</details>" +
         '<p class="mj-meta">Review leaves the complete record unchanged as the operation output. Later recipe operations receive that record. Recovery modes return only the selected saved string; surrounding operations still apply.</p></div></article></section>';
+}
+
+/** Current byte reproduction, never authentication or historical edit detection. */
+export function presentLensVerification(report, context) {
+    const {counts, review, search} = report;
+    const title = report.status === "matches" ? "All saved routes reproduced the saved payload." :
+        report.status === "differences" ? "Differences found in saved replay claims." : "Some saved routes could not be reproduced.";
+    let output = '<section class="magic-json" data-lens-verification="true">' + styles +
+        "<h2>Saved replay check</h2>" + `<p class="mj-status">${escape(title)}</p>` +
+        `<p><strong>${counts.matched} matched · ${counts.mismatched} differed · ${counts.unreproduced} not reproduced</strong></p>` +
+        '<p class="mj-trust"><strong>Consistency, not authenticity.</strong> A matching replay does not authenticate this editable record or prove it was never changed. Coordinated edits can still match.</p>' +
+        '<p class="mj-meta">Lens regenerated current supported routes from the saved input. Stored recipes, search limits and claims never directed execution. Unsupported routes remain inert.</p>' +
+        `<p class="mj-meta">${review.inputBytes} saved-input bytes · ${review.payloadBytes} saved-payload bytes. Every reproduced route was checked against that complete saved input.</p>`;
+    for (const route of report.routes) {
+        const label = route.status === "matched" ? "Matched" : route.status === "mismatched" ? "Difference found" : "Not reproduced";
+        output += '<article class="mj-card"><div class="mj-head">' + `<h3>Saved route ${route.index} · ${label}</h3>`;
+        if (route.status === "unreproduced") output += `<p>${escape(route.reason)}</p>`;
+        else {
+            output += route.payloadMatches ? "<p>Exact UTF-8 payload bytes match.</p>" :
+                `<p><strong>Payload bytes differ.</strong> Saved: ${review.payloadBytes} bytes; reproduced: ${route.actualBytes} bytes. ` +
+                `First difference at UTF-8 byte ${route.firstDifference} (zero-based).</p>`;
+            if (route.locationSaved) output += route.locationMatches ? "<p>Saved HTTP source coordinates match the current request extraction.</p>" :
+                '<p class="mj-warning"><strong>Saved HTTP source coordinates differ.</strong> Payload equality does not validate the saved location.</p>';
+            if (route.currentOrigin) output += httpLocation({httpOrigin: route.currentOrigin});
+            if (!route.payloadMatches) output += "<details><summary>Reproduced text preview</summary>" +
+                pre(route.actualPreview, "Current reproduced text preview") +
+                (route.previewTruncated ? '<p class="mj-meta">Preview shortened to 2,048 characters. The byte comparison covered the complete result.</p>' : "") + "</details>";
+        }
+        output += "</div></article>";
+    }
+    output += "<details><summary>Saved payload and current parsing cautions</summary>" +
+        presentJsonHazards(review.payload) + preview(review.payload) + "</details>" +
+        "<details><summary>Current check scope and stopping points</summary>" +
+        `<p>Current exploration: ${escape(search.status)}${search.reason ? " · " + escape(search.reason) : ""}; ${search.checkedReplays} native replays.</p>` +
+        "<p>Fixed profile limits: 5 layers, 16 states, 64 replays, 32 steps per route, 2 MiB retained state bytes, 1 MiB per output and 3 cooperative seconds after module preparation. Module loading is outside that clock. This is not a hard CPU or memory sandbox.</p>" +
+        "<p>Only current payload-trail profiles qualify. General Magic discoveries or older recipes may be unsupported. Not reproduced is not proof of an edit or a false payload. A match checks exact payload bytes and any saved HTTP source coordinates; it does not validate saved search status, warnings, time, identity or signatures.</p>" +
+        (search.depthLimited ? "<p>The current layer ceiling was reached; further layers were not searched.</p>" : "") +
+        (search.stops.length ? "<ul>" + search.stops.map(stop => `<li>${escape(stop.reason)}${stop.detail ? " · " + escape(stop.detail) : ""}</li>`).join("") + "</ul>" : "") + "</details>";
+    if (context) output += `<p><a href="${context.recipeUrl("Review")}">Return to record review</a></p>`;
+    return output + '<p class="mj-meta">The saved record stays unchanged. No untrusted recipe is loaded into your recipe workspace.</p></section>';
 }

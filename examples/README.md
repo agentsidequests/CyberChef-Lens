@@ -56,6 +56,14 @@ These files are included in Lens's standalone ZIP under `examples/`. Keep that
 folder separate from Input: drag the individual input file, not the folder.
 The examples require no network service, key or API account.
 
+For a saved-record replay check, choose **Lens workspace → Verify saved evidence**,
+load `lens-evidence.json` or choose **Try a saved example**, then **Check saved
+evidence**. The example matches its decoded payload. Changing only its saved
+`result.text` from `queued` to `failed` keeps valid JSON and equal byte lengths,
+but produces a mismatch. Coordinated edits can match; this is consistency, not
+authenticity. The [verification guide](../docs/USAGE.md#check-saved-replay) explains
+supported profiles and unresolved outcomes.
+
 When pasting one paired Cookie field directly, one terminal LF or CRLF is
 accepted. The saved original input keeps that ending; extracted payload bytes
 are unchanged. That field-only profile refuses complete requests or folded/multiline headers.

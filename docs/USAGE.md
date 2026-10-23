@@ -34,6 +34,57 @@ Base64 carrier to preserve line endings before the saved decoding steps.
 Saved evidence retains the original source, not that presentation carrier.
 Neither route authenticates input. The same profile and work limits apply.
 
+## Check saved replay
+
+Choose **Lens workspace → Verify saved evidence**. Paste a complete version-1
+Lens evidence record or choose its UTF-8 JSON file, up to 2 MiB, then select
+**Check saved evidence**. **Try a saved example** loads a fictional record.
+Nothing runs while typing. Each saved route gets its own outcome:
+
+- **Matched:** a current qualified route has the same operations and arguments,
+  reproduces the exact saved UTF-8 payload bytes, and agrees with any saved HTTP
+  source coordinates.
+- **Difference found:** a reproduced route yields different payload bytes or
+  different HTTP coordinates. The report separates those cases, gives the first
+  unequal zero-based UTF-8 byte for a payload mismatch, and offers a bounded
+  preview of the current result. The comparison covers the whole payload.
+- **Not reproduced:** the recipe is unsupported or the bounded current search
+  did not establish it. This does not prove an edit or an incorrect payload.
+
+The check regenerates current **payload-trail** profiles from the complete saved
+input. Imported recipes, mode, limits, status and warnings never control execution.
+Only a regenerated recipe can be compared with a saved claim; stored operations
+and arguments are never sent to a module loader or executor. Arbitrary Regex,
+JPath, network, code, flow-control and general Magic programs remain inert.
+Older or general-purpose native discovery recipes may be unreproduced even when
+they are valid CyberChef recipes.
+Steps must contain only the supported `op` and `args` fields; extra operation
+flags remain unsupported rather than being ignored in a claimed match.
+
+Current limits are fixed: 5 layers, 16 states, 64 replays, 32 steps per route,
+2 MiB retained state bytes, 1 MiB per output and a cooperative 3 seconds after
+module preparation. Loading modules is outside that clock. Up to 64 saved routes
+are compared; duplicate claims do not cause duplicate executions. A timeout,
+cancellation or unavailable module cannot become an empty success.
+
+The record stays unchanged. **Cancel**, source edits and mode changes invalidate
+dependent results. Evidence mode's 2 MiB file allowance does not raise ordinary
+investigation's 64 KiB source limit. The embedded saved input remains limited
+to 64 KiB and the saved payload to 1 MiB. Fresh payload parsing cautions remain
+available; recorded caution counts and search-completeness claims are not trusted.
+
+In the expert recipe workspace, **Inspect Lens Evidence → Verify replay** runs
+the same check. **Review** remains read-only and does not rerun decoding; its
+**Check saved replay** link selects the explicit check. Review/recovery links
+retain surrounding operations and the top-level Input. Verify replay leaves the
+complete record as Output, so later recipe operations still receive that record.
+
+**Consistency is not authenticity.** A matching check does not prove when the
+record was created, that it was never changed, or that signatures or claims are
+valid. Coordinated changes to input, recipe and payload can still match. No
+cryptographic baseline, historical tamper detection or chain-of-custody proof is
+provided, and no request is sent. Exports remain editable and unredacted.
+
 ## Whole copied HTTP requests
 
 Paste or load one complete **HTTP/1.0 or HTTP/1.1 request** into the guided

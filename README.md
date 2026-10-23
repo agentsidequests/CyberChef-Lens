@@ -23,6 +23,11 @@ loads a fictional example whose Authorization payload and JSON body disagree.
 Results show each field's source line and UTF-8 byte range; the original request
 and full replay recipes stay together. [Supported request framing](docs/USAGE.md#whole-copied-http-requests).
 
+To recheck an exported record, choose **Verify saved evidence** in the workspace,
+load its complete JSON file and select **Check saved evidence**. Supported routes
+are regenerated from the saved input; each claimed replay either matches,
+differs or remains unreproduced. [Verification scope](docs/USAGE.md#check-saved-replay).
+
 In the built app, open **Lens guide / Help** at the top right, then choose
 **Open the three-layer demo (new tab)**. It opens a separate workspace; your
 current input and recipe stay where they are.

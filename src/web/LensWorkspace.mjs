@@ -7,6 +7,7 @@ import LensWorker from "worker-loader?inline=no-fallback!./workers/LensWorkspace
 import Utils from "../core/Utils.mjs";
 import {readLensSource} from "../core/lib/LensSource.mjs";
 import {presentPayloadTrail} from "../core/lib/MagicJsonPresentation.mjs";
+import {lensEvidenceExample} from "../core/lib/LensEvidenceExample.mjs";
 
 /** Attach a task surface without changing Input, Recipe, URL or stored options. */
 export default function setupLensWorkspace() {
@@ -25,13 +26,16 @@ export default function setupLensWorkspace() {
         <p>Find JSON in encoded data or a whole copied HTTP request, inspect the cautions, and carry the exact result forward.</p></div>
         <div class="lw-mode" role="group" aria-label="Investigation task">
         <button type="button" id="lw-single" aria-pressed="true">Investigate data</button>
-        <button type="button" id="lw-pair" aria-pressed="false">Compare two captures</button></div>
+        <button type="button" id="lw-pair" aria-pressed="false">Compare two captures</button>
+        <button type="button" id="lw-verify" aria-pressed="false">Verify saved evidence</button></div>
+        <p id="lw-verify-note" hidden>Load a complete Lens evidence JSON record in Source A, up to 2 MiB. Lens regenerates supported decoding routes and compares exact payload bytes. Recipes supplied by the file stay inert. A match checks consistency, not authenticity.</p>
         <section class="lw-sources" aria-label="Original sources"></section>
         <div class="lw-run"><button type="button" id="lw-run" class="lw-primary">Find JSON</button>
         <button type="button" id="lw-cancel" hidden>Cancel</button>
         <button type="button" id="lw-demo">Try the fictional example</button>
         <button type="button" id="lw-http-demo">Try an HTTP request</button>
-        <details class="lw-depth"><summary>Search settings</summary><label for="lw-depth">Layer limit</label>
+        <button type="button" id="lw-evidence-demo" hidden>Try a saved example</button>
+        <details class="lw-depth" id="lw-settings"><summary>Search settings</summary><label for="lw-depth">Layer limit</label>
         <select id="lw-depth"><option>1</option><option>2</option><option selected>3</option><option>4</option><option>5</option></select>
         <p>Default: 3 layers. Recognized profiles only, up to 64 KiB per source. Increasing depth does not increase trust.</p></details></div>
         <p id="lw-status" role="status" aria-live="polite">Choose a file or paste data, then find JSON. Nothing runs while you type.</p>
@@ -44,7 +48,7 @@ export default function setupLensWorkspace() {
         get("lw-status").textContent = message;
     };
     const sources = [{text: "", revision: 0}, {text: "", revision: 0}];
-    let pair = false, reports = [], worker = null, job = 0;
+    let pair = false, verifying = false, reports = [], worker = null, job = 0;
 
     /** Stop CPU work and reject any late reply before changing a source. */
     function stop() {
@@ -73,13 +77,14 @@ export default function setupLensWorkspace() {
         const revision = ++sources[index].revision;
         try {
             if (!file) return;
-            if (file.size > 65536) throw new RangeError("Each source is limited to 64 KiB. The file was not shortened.");
-            const text = readLensSource(await file.arrayBuffer());
+            const limit = verifying ? 2097152 : 65536;
+            if (file.size > limit) throw new RangeError(`Each source is limited to ${verifying ? "2 MiB" : "64 KiB"}. The file was not shortened.`);
+            const text = readLensSource(await file.arrayBuffer(), limit);
             if (revision !== sources[index].revision) return;
             invalidate(); sources[index].text = text;
             get(`lw-input-${index}`).value = text;
             sourceNote(index, `${file.name} · original UTF-8 text retained; editing creates a new source`);
-            status(`Source ${index ? "B" : "A"} loaded. Choose Find JSON when ready.`);
+            status(`Source ${index ? "B" : "A"} loaded. Choose ${verifying ? "Check saved evidence" : "Find JSON"} when ready.`);
         } catch (error) {
             if (revision === sources[index].revision) status(`${error.message} Previous source retained.`);
         }
@@ -214,6 +219,13 @@ export default function setupLensWorkspace() {
                 get("lw-comparison").innerHTML = message.result.html;
                 status(`Comparison complete: ${message.result.report.total} change records across the selected layers.`);
                 get("lw-comparison").scrollIntoView({block: "start"});
+            } else if (action === "lensVerify") {
+                get("lw-results").innerHTML = message.result.html;
+                const counts = message.result.counts;
+                status(`Saved replay check: ${counts.matched} matched, ${counts.mismatched} differed, ${counts.unreproduced} not reproduced. This checks consistency, not authenticity.`);
+                const heading = get("lw-results").querySelector("h2");
+                heading.tabIndex = -1; heading.focus();
+                get("lw-results").scrollIntoView({block: "start"});
             } else {
                 reports = message.result; showReports();
             }
@@ -224,22 +236,34 @@ export default function setupLensWorkspace() {
 
     /** Switch task while retaining both source texts for deliberate reuse. */
     function setMode(value) {
-        pair = value; invalidate(); get("lw-source-1").hidden = !pair;
-        get("lw-single").setAttribute("aria-pressed", String(!pair));
+        pair = value === "compare"; verifying = value === "verify";
+        sources.forEach(source => source.revision++);
+        invalidate(); get("lw-source-1").hidden = !pair;
+        get("lw-single").setAttribute("aria-pressed", String(!pair && !verifying));
         get("lw-pair").setAttribute("aria-pressed", String(pair));
-        get("lw-run").textContent = pair ? "Find JSON in both sources" : "Find JSON";
+        get("lw-verify").setAttribute("aria-pressed", String(verifying));
+        get("lw-verify-note").hidden = !verifying;
+        get("lw-evidence-demo").hidden = !verifying;
+        for (const id of ["lw-demo", "lw-http-demo", "lw-settings"]) get(id).hidden = verifying;
+        get("lw-input-0").placeholder = verifying ? "Paste one complete saved Lens evidence JSON record…" : "Paste JSON, encoded data, or a complete HTTP/1.x request…";
+        sources.forEach((source, index) => {
+            sourceNote(index, `Retained source · ${verifying ? "2 MiB evidence record" : "64 KiB source"} limit; choose a new file or edit to replace`);
+        });
+        get("lw-run").textContent = verifying ? "Check saved evidence" : pair ? "Find JSON in both sources" : "Find JSON";
+        status(verifying ? "Load saved evidence or try the saved example, then check it. Nothing runs while you type." : "Choose a file or paste data, then find JSON.");
     }
-    get("lw-single").addEventListener("click", () => setMode(false));
-    get("lw-pair").addEventListener("click", () => setMode(true));
+    get("lw-single").addEventListener("click", () => setMode("investigate"));
+    get("lw-pair").addEventListener("click", () => setMode("compare"));
+    get("lw-verify").addEventListener("click", () => setMode("verify"));
     get("lw-depth").addEventListener("change", invalidate);
     get("lw-run").addEventListener("click", () => {
-        invalidate(); run("lensInvestigate", sources.slice(0, pair ? 2 : 1).map(source => source.text));
+        invalidate(); run(verifying ? "lensVerify" : "lensInvestigate", sources.slice(0, pair ? 2 : 1).map(source => source.text));
     });
     get("lw-cancel").addEventListener("click", () => {
         stop(); status("Cancelled. Sources retained; no new completed result is claimed.");
     });
     get("lw-demo").addEventListener("click", () => {
-        setMode(false); sources[0].revision++;
+        setMode("investigate"); sources[0].revision++;
         const encoded = new URLSearchParams(document.getElementById("lens-guide-demo").hash.slice(1)).get("input");
         sources[0].text = readLensSource(Uint8Array.from(atob(encoded), char => char.charCodeAt(0)));
         get("lw-input-0").value = sources[0].text;
@@ -248,7 +272,7 @@ export default function setupLensWorkspace() {
         status("Fictional example loaded. Choose Find JSON to follow its three layers.");
     });
     get("lw-http-demo").addEventListener("click", () => {
-        setMode(false); sources[0].revision++;
+        setMode("investigate"); sources[0].revision++;
         const payload = '{"case":"HTTP-204","status":"queued"}';
         const token = btoa('{"alg":"HS256"}').replace(/=+$/, "") + "." + btoa(payload).replace(/=+$/, "") + "." + "A".repeat(43);
         const body = '{"case":"HTTP-204","status":"released"}\n';
@@ -259,11 +283,17 @@ export default function setupLensWorkspace() {
         get("lw-depth").value = "3";
         status("HTTP example loaded. Find JSON to inspect the Authorization payload and body as separate results.");
     });
+    get("lw-evidence-demo").addEventListener("click", () => {
+        setMode("verify"); sources[0].text = lensEvidenceExample();
+        get("lw-input-0").value = sources[0].text;
+        sourceNote(0, "Fictional saved record · edit it to try a changed claim");
+        status("Saved example loaded. Choose Check saved evidence to compare its replay with the saved payload.");
+    });
     opener.addEventListener("click", () => {
         native.hidden = true; root.hidden = false; get("lw-input-0").focus();
     });
     const close = () => {
-        if (worker) status("Cancelled while leaving the workspace. Sources retained; choose Find JSON to run again.");
+        if (worker) status("Cancelled while leaving the workspace. Sources retained; choose the task action to run again.");
         stop(); root.hidden = true; native.hidden = false; opener.focus();
     };
     get("lw-close").addEventListener("click", close);

@@ -1,0 +1,36 @@
+{
+  "format": "cyberchef-lens-evidence",
+  "formatVersion": 1,
+  "producer": "CyberChef Lens",
+  "notice": "Fictional editable example, not an authenticity proof.",
+  "input": {
+    "encoding": "UTF-8",
+    "text": "eyJjYXNlIjoiU0FWRS0yMDQiLCJzdGF0dXMiOiJxdWV1ZWQiLCJpZCI6MSwiaWQiOjJ9Cg==\n",
+    "byteLength": 73
+  },
+  "investigation": {
+    "mode": "JSON payload trail",
+    "status": "fictional-example"
+  },
+  "result": {
+    "text": "{\"case\":\"SAVE-204\",\"status\":\"queued\",\"id\":1,\"id\":2}\n",
+    "byteLength": 52,
+    "warnings": [
+      "Fictional example; no signature or identity is verified."
+    ],
+    "routes": [
+      {
+        "recipe": [
+          {
+            "op": "From Base64",
+            "args": [
+              "A-Za-z0-9+/=",
+              true,
+              false
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}
