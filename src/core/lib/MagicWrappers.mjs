@@ -56,12 +56,12 @@ function compactFieldRecipe(index) {
         .concat({op: "From Base64", args: ["A-Za-z0-9-_", true, false]});
 }
 
-/** New variants never infer compression, encryption or an absent signature. */
+/** Generic compact-field variants never infer compression, encryption or trust. */
 function compactVariantRefusal(candidate, headerText) {
     const header = JSON.parse(headerText);
     if (Array.isArray(header) || !owns(header, "alg") || typeof header.alg !== "string" || !header.alg.length) return "A compact field requires an object header with a nonempty algorithm declaration.";
     if (hasDuplicateJsonMembers(headerText)) return "Duplicate compact-token header members are ambiguous; no field action is offered.";
-    if (owns(header, "enc") || owns(header, "zip") || owns(header, "crit") || owns(header, "b64") && header.b64 !== true) return "Encryption, compression, critical or encoding overrides are outside padded/unsigned field extraction.";
+    if (owns(header, "enc") || owns(header, "zip") || owns(header, "crit") || owns(header, "b64") && header.b64 !== true) return "Encryption, compression, critical or encoding overrides are outside this compact-field extraction profile.";
     if (candidate.compactVariant.unsigned && header.alg !== "none") return "The signature is missing. Only an explicit alg:none declaration permits the unsigned route.";
     if (!candidate.compactVariant.unsigned && header.alg === "none") return "An alg:none declaration with a nonempty final field is inconsistent; no new field action is offered.";
     return null;
@@ -183,13 +183,17 @@ export async function inspectJsonWrappers(input, replay, {prepare, ...budgets}={
                 headerRecipe: payloadRecipe("."), fields: fieldInfo.map((field, i) => ({...field,
                     name: i === 0 ? "Encoded header" : i === 1 ? "Encoded payload" : field.name}))});
         }
-        // Separate opt-in generic variants; do not relax any legacy serializer,
+        // A short digest-length heuristic belongs to the legacy serializers,
+        // not all compact signatures. A new route still requires a checked header.
+        const signatureShapeOnly = fields.length === 3 && !signatureShape && isBase64url(signature) &&
+            fields.every(field => !field.includes("="));
+        // Separate opt-in variants; do not relax any legacy serializer,
         // carrier or compressed-token recognizer.
         if (separator === "." && fields.length === 3 &&
-            (signature === "" || fields.some(field => field.includes("="))) &&
+            (signature === "" || fields.some(field => field.includes("=")) || signatureShapeOnly) &&
             isPaddedBase64url(fields[0]) && isPaddedBase64url(fields[1]) &&
             (signature === "" || isPaddedBase64url(signature))) {
-            candidates.push({kind: "Compact token field", compactVariant: {padded: fields.some(field => field.includes("=")), unsigned: signature === ""},
+            candidates.push({kind: "Compact token field", compactVariant: {padded: fields.some(field => field.includes("=")), unsigned: signature === "", signatureShapeOnly},
                 recipe: compactFieldRecipe(1), headerRecipe: compactFieldRecipe(0),
                 fields: [{name: "Encoded header (unverified)", value: fields[0]}, {name: "Encoded JSON field", value: fields[1]},
                          {name: signature === "" ? "No signature (unsigned; claims unverified)" : "Possible signature (unverified)", value: signature}]});

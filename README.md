@@ -61,6 +61,9 @@ Available now:
   choose an intended interpretation or authenticate a message.
 - Recognizes a bounded set of JSON-bearing containers, including compact tokens,
   paired cookies, JSON envelopes and explicitly supported compressed profiles.
+- Preserves exact JSON from canonical compact tokens with signature sizes outside
+  the older serializer heuristics, including a published RSA example. A checked
+  encoding shape is not a verified signature or algorithm/key match.
 - Uses bounded inflation for its compressed wrapper recipes: one layer, 64 KiB
   compressed input, 1 MiB decoded-output cap, no partial payload result. Raw
   DEFLATE has no checksum. Timers are cooperative, not a process sandbox.
@@ -149,6 +152,20 @@ numbers becoming zero, and magnitudes outside JavaScript's safe-integer range.
 They are not a complete floating-point precision or security audit. A quiet card
 is not a safety verdict. Inspection is limited to the text budgets above, with
 at most 16 detailed findings shown and complete counts for an inspected document.
+
+## Published-format check
+
+The source-led checks include the [RFC 7515 compact and JSON examples](https://www.rfc-editor.org/rfc/rfc7515.html#appendix-A).
+All six selected JSON-bearing representations now yield their exact payload in
+the focused and trail modes. They share one payload, so this is format coverage,
+not six independent messages or an accuracy benchmark. Native Magic already
+recovers the values in three of them, and manual recipes recover all six.
+See [the comparison scope](docs/COMPARISON.md#rfc-format-coverage).
+
+One known copying-context gap remains: a token prefixed with `Authorization:
+Bearer` is not automatically stripped by these profiles. Remove that prefix
+manually before investigation. Unencoded/detached payloads and arbitrary HTTP
+captures are not newly supported by the signature-coverage change.
 
 ## Roadmap
 

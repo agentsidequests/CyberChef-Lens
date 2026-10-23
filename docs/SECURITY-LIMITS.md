@@ -71,6 +71,24 @@ or removals; the comparison status still reports differing token text. A custom
 sample delimiter must be nonempty and at most 1 KiB UTF-8. No cryptographic,
 schema, semantic-equivalence or duplicate-member interpretation is performed.
 
+## Signature-length-independent compact-field extraction
+
+An additional route handles canonical unpadded compact fields whose signature
+length does not match the legacy serializer list. It reuses complete strict
+header/payload checks and existing native extraction; no decoder algorithm or
+cryptographic verification was added. A header must be an object with a nonempty
+algorithm declaration and no duplicate names. Missing/nonobject headers,
+inconsistent `alg:none` with a nonempty signature, encryption, compression,
+critical and unsupported encoding declarations do not earn this new action.
+
+Only the encoding shape is checked. Even a correctly sized field or a declared
+algorithm with an arbitrary signature is not authenticated. Unknown algorithm
+names may still be inspectable data; algorithm/key compatibility is not checked.
+JSON arrays are generic JSON, not JWT Claims Set objects. Legacy short-signature
+serializer behavior, shared evidence budgets, cancellation and output bounds are
+unchanged. Bearer headers, detached/unencoded payloads and additional compressed
+profiles are not newly supported.
+
 ## Selected parsing cautions
 
 Lens cards and JSON Beautify's opt-in lossless formatted view inspect strict JSON

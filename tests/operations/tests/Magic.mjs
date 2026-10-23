@@ -378,5 +378,17 @@ TestRegister.addTests([
         input: "{}",
         expectedOutput: "JSON payload trails support inputs up to 64 KiB and an integer depth from 0 to 5.",
         recipeConfig: [{op: "Magic", args: [6, false, false, "", "JSON payload trail"]}]
+    },
+    {
+        name: "Magic wrappers: canonical long signature retains unverified payload action",
+        input: Buffer.from('{"alg":"RS256"}').toString("base64url") + "." + Buffer.from('{"case":"native-long-signature"}').toString("base64url") + "." + Buffer.alloc(256, 19).toString("base64url"),
+        expectedMatch: /Decoded compact JSON payload \(unverified\)[\s\S]+Encoding shape only[\s\S]+Load payload recipe/,
+        recipeConfig: [{op: "Magic", args: [3, false, false, "", "JSON wrappers"]}]
+    },
+    {
+        name: "Magic wrappers: long signature does not legitimize alg none",
+        input: Buffer.from('{"alg":"none"}').toString("base64url") + "." + Buffer.from('{"case":"refused"}').toString("base64url") + "." + Buffer.alloc(256, 19).toString("base64url"),
+        expectedMatch: /No supported JSON wrapper confirmed[\s\S]+alg:none declaration with a nonempty final field/,
+        recipeConfig: [{op: "Magic", args: [3, false, false, "", "JSON wrappers"]}]
     }
 ]);

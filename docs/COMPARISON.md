@@ -82,3 +82,33 @@ formatting-only, without assigning semantic equality. Repeated members, numeric
 lexemes and escaped string spelling remain visible. The same bounded text
 inspection supplies Lens's first-difference view. These selected mechanism tests
 are not an independent field evaluation or a general comparison score.
+
+## RFC format coverage
+
+A later source-led challenge froze six JSON-bearing representations from
+[RFC 7515](https://www.rfc-editor.org/rfc/rfc7515.html#appendix-A): HMAC, RSA,
+ECDSA, unsigned compact form, general JSON and flattened JSON. All share the
+same published payload; they test six representations, not six independent
+messages. Display-only line wrapping was removed as the specification directs.
+
+Before the repair, focused wrappers and payload trail preserved the exact text
+for five of the six. The RSA example's longer signature was excluded by a
+short-signature heuristic shared with serializer recognition. The new separate
+guarded compact-field path recovers all six exact texts. The known-case repair
+is included in this result; it is not a fresh holdout score.
+
+Native Magic recovers the payload values in three cases, with different
+formatting. It is not a semantic miss on the RSA example. Competent manual native
+recipes recover all six exact texts. Existing native witnesses remain available.
+The new path checks canonical Base64url and a complete object header with an
+algorithm declaration; it does not verify cryptographic validity, key size,
+algorithm/key compatibility, issuer or claims. Legacy serializer heuristics stay
+unchanged. New-path encryption, compression, critical and unencoded overrides
+remain outside this bounded profile.
+
+Six separate public non-goal controls from RFC 7515, [RFC 7797](https://www.rfc-editor.org/rfc/rfc7797.html#section-4)
+and [RFC 6750](https://www.rfc-editor.org/rfc/rfc6750.html#section-2.1) retain no
+false JSON-payload action. A clearly labeled header or outer-envelope inspection
+is not counted as payload recovery or a false payload result. Two author-composed
+Bearer-header contexts remain manual-only; they are not published example inputs
+and are not removed from the record to improve the score.

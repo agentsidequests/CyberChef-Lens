@@ -15,6 +15,17 @@ export function isJoseHeaderShape(value) {
 export function annotateWrapperInterpretation(candidate) {
     candidate.interpretationWarnings = [];
     if (candidate.compactVariant) {
+        if (candidate.compactVariant.signatureShapeOnly) {
+            candidate.kind = "Compact token (signature unchecked)";
+            candidate.resultRole = "Decoded compact JSON payload (unverified)";
+            candidate.compatibility = {format: "JWS", status: "shape-only", reasons: []};
+            candidate.payloadAction = candidate.accepted;
+            candidate.interpretationWarnings.push("Encoding shape only: signature bytes, algorithm/key compatibility, issuer and claims have not been verified. A matching signature length is not proof of validity.");
+            if (candidate.evidence.status === "passed" && Array.isArray(JSON.parse(candidate.evidence.text))) {
+                candidate.interpretationWarnings.push("The decoded array is generic JSON, not a JWT Claims Set object.");
+            }
+            return;
+        }
         const reasons = [];
         const explicitlyUnsigned = candidate.compactVariant.unsigned && !candidate.variantRefusal &&
             candidate.headerEvidence?.status === "passed" && JSON.parse(candidate.headerEvidence.text).alg === "none";
