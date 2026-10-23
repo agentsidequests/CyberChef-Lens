@@ -39,7 +39,7 @@ test("the demo opens a same-app document separately with source-bound input", ()
     const html = read("src/web/html/index.html"), config = read("Gruntfile.js");
     const anchor = html.match(/<a id="lens-guide-demo"[\s\S]*?<\/a>/)?.[0];
     assert.ok(anchor);
-    assert.match(anchor, /href="index\.html#recipe=Magic\(3,false,false,'','JSON%20payload%20trail'\)/);
+    assert.match(anchor, /href="#recipe=Magic\(3,false,false,'','JSON%20payload%20trail'\)/);
     assert.match(anchor, /target="_blank"/);
     assert.match(anchor, /rel="noopener"/);
     assert.doesNotMatch(anchor, /https?:|data-dismiss/);
@@ -47,6 +47,31 @@ test("the demo opens a same-app document separately with source-bound input", ()
     assert.equal((config.match(/lensExampleInput: /g) || []).length, 2, "prod and dev use the same fixture");
     assert.match(config, /readFileSync\("examples\/lens-investigation\.txt"\)/);
 });
+
+for (const documentURL of [
+    "http://localhost/index.html#recipe=To_Hex()",
+    "http://localhost/CyberChef_v11.5.0.html#recipe=To_Hex()",
+    "http://localhost/review/nested/CyberChef_v11.5.0.html?view=local#input=cHJldmlvdXM",
+    "http://localhost/review/nested/?view=local#recipe=To_Hex()"
+]) {
+    test(`the demo retains its containing document at ${documentURL}`, () => {
+        const anchor = read("src/web/html/index.html").match(/<a id="lens-guide-demo"[\s\S]*?<\/a>/)[0];
+        const sample = readFileSync(new URL("examples/lens-investigation.txt", root));
+        const rendered = template(anchor)({htmlWebpackPlugin: {options: {lensExampleInput: sample.toString("base64")}}});
+        const href = rendered.match(/href="([^"]+)"/)[1].replaceAll("&amp;", "&");
+        const original = new URL(documentURL), target = new URL(href, original);
+        assert.equal(target.origin, original.origin);
+        assert.equal(target.pathname, original.pathname, "renamed and nested entrypoints must stay reachable");
+        assert.equal(target.search, original.search, "preserve the serving document's query");
+        assert.notEqual(target.hash, original.hash, "use the demo fragment rather than the existing workspace");
+        const params = Utils.parseURIParams(target.hash);
+        assert.equal(params.recipe, "Magic(3,false,false,'','JSON payload trail')");
+        assert.deepEqual(Buffer.from(params.input, "base64"), sample);
+        assert.equal(params.ieol, "LF");
+        assert.equal(params.oenc, "65001");
+        assert.equal(params.oeol, "LF");
+    });
+}
 
 test("the rendered demo survives CyberChef's native URI parser byte for byte", () => {
     const anchor = read("src/web/html/index.html").match(/<a id="lens-guide-demo"[\s\S]*?<\/a>/)[0];
