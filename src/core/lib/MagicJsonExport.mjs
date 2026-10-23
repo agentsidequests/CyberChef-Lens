@@ -25,7 +25,7 @@ export function createJsonEvidence(group, {report, mode, index, count}) {
         producer: "CyberChef Lens",
         notice: "Unredacted local snapshot, not a signature, chain-of-custody or authenticity proof. " +
             "This editable file may contain credentials. Review before sharing. Other results are not included; the selected result is not a preferred truth.",
-        input: {encoding: "UTF-8", scope: "Complete input to this Magic step, after any preceding recipe operations.",
+        input: {encoding: "UTF-8", scope: report.harSelection ? "Selected recorded HAR body after its declared HAR text encoding. Recipes start here, not from the complete HAR capture or original wire bytes." : "Complete input to this Magic step, after any preceding recipe operations.",
             text: report.original, byteLength: ENCODER.encode(report.original).length},
         replay: "Run a result route's recipe against input.text. These recipes exclude surrounding operations; do not run them against a different top-level Input.",
         investigation: {mode, status: report.status, reason: report.reason ?? null,
@@ -35,7 +35,7 @@ export function createJsonEvidence(group, {report, mode, index, count}) {
             checkedReplays: report.checkedReplays ?? null,
             checked: report.checked ?? null, total: report.total ?? null,
             native: routeSummary(report.native), wrappers: routeSummary(report.wrappers),
-            httpRequest: report.httpRequest, stops: report.stops || []},
+            httpRequest: report.httpRequest, harSelection: report.harSelection, stops: report.stops || []},
         result: {text: group.text, byteLength: ENCODER.encode(group.text).length,
             role: group.role || "Checked JSON layer", warnings: notes,
             parsingCautions: inspectJsonHazards(group.text),

@@ -22,7 +22,7 @@ decoded document limit remains in force even if decoding reached a larger JSON.
 Loaded files retain their original UTF-8 text, including CRLF. Editing a source
 creates new text using the browser textarea's newline representation. Sources,
 settings and selections invalidate dependent results; **Cancel** stops the
-isolated worker and retains the source. Files above 64 KiB and invalid UTF-8 are
+isolated worker and retains the source. Files above the current mode's limit and invalid UTF-8 are
 refused without replacing the previous source. Inputs remain in tab memory,
 are not written to storage or the URL, and clear on reload. **Recipe workspace**
 or Escape returns to the unchanged expert recipe and input.
@@ -33,6 +33,41 @@ tab; that action carries source bytes in the local URL fragment, using a native
 Base64 carrier to preserve line endings before the saved decoding steps.
 Saved evidence retains the original source, not that presentation carrier.
 Neither route authenticates input. The same profile and work limits apply.
+
+## Import a HAR capture
+
+Choose **Import HAR**, load a UTF-8 `.har` file or paste its complete JSON into
+Source A, then **List HAR entries**. **Try a HAR example** loads fictional request
+and response bodies that disagree, plus an entry whose body was not recorded.
+Choose a **Recorded entry** and **Recorded body**, then **Find JSON in selected
+body**. Changing either selection removes old results. Nothing runs automatically.
+
+The importer accepts a bounded HAR 1.2 profile: 2 MiB per capture, 256 entries and
+64 nested metadata containers. It rejects duplicate metadata member names, invalid
+UTF-8 and malformed JSON. This is body selection, not full HAR schema validation.
+Only `request.postData.text` or `response.content.text` is used. Missing and empty
+bodies are distinct; parameters, files, headers and URLs are not reconstructed
+into a request. Entries are never combined and no request is sent. Capture URLs
+are inert labels. A sanitized browser export may omit credentials.
+
+Response text without `content.encoding` is already HTTP decoded and transcoded
+to UTF-8 in HAR. Lens does not decompress it again from a `Content-Encoding`
+header. With `content.encoding: "base64"`, Lens decodes canonical padded standard
+Base64 once, then requires strict UTF-8. Unsupported encodings and binary/non-UTF-8
+bodies are refused. The selected decoded text is capped at 64 KiB; nothing is
+shortened. HAR byte-size fields are not treated as the selected text's byte count.
+[HAR 1.2 format](https://www.softwareishard.com/blog/har-12-spec/),
+[Chrome HAR exports](https://developer.chrome.com/docs/devtools/network/reference#save-as-har).
+
+The complete capture remains in Source A. **Selected body — complete** shows the
+input used by Lens; number spelling, duplicate members, string escapes and loaded
+CRLF survive in the generated evidence. Browser textareas display normalized
+line endings; the saved JSON string retains them. Recipes and saved evidence
+start from that selected decoded body, **not the complete HAR or original wire
+bytes**. Evidence records retain its entry number, field path and representation,
+without unrelated URLs or headers. Save the original capture separately if you
+need it. Evidence verification and redacted sharing work on the selected body.
+These checks do not authenticate a server, capture or response.
 
 ## Prepare a redacted sharing copy
 

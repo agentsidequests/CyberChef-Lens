@@ -18,6 +18,11 @@ file/paste inputs and explicit layer choices, without a recipe or delimiter.
 Result cards retain their decoding trails, parsing cautions and evidence saves.
 Your existing recipe workspace stays available through **Recipe workspace**.
 
+**Import HAR** lists the entries in a browser network capture. Choose one request
+or response body, then **Find JSON in selected body**. Source A keeps the complete
+capture; recipes and evidence start from the chosen body. Missing bodies and
+unsupported encodings stay explicit. [HAR import scope](docs/USAGE.md#import-a-har-capture).
+
 You can also paste one **complete HTTP/1.x request**. **Try an HTTP request**
 loads a fictional example whose Authorization payload and JSON body disagree.
 Results show each field's source line and UTF-8 byte range; the original request

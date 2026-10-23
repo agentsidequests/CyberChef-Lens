@@ -10,6 +10,7 @@ import {presentPayloadTrail} from "../core/lib/MagicJsonPresentation.mjs";
 import {lensEvidenceExample, lensSharingExample} from "../core/lib/LensEvidenceExample.mjs";
 import {DEFAULT_SHARING_FIELDS} from "../core/lib/LensSharing.mjs";
 import {createJsonEvidence} from "../core/lib/MagicJsonExport.mjs";
+import {lensHarExample} from "../core/lib/LensHar.mjs";
 
 /** Attach a task surface without changing Input, Recipe, URL or stored options. */
 export default function setupLensWorkspace() {
@@ -29,16 +30,27 @@ export default function setupLensWorkspace() {
         <div class="lw-mode" role="group" aria-label="Investigation task">
         <button type="button" id="lw-single" aria-pressed="true">Investigate data</button>
         <button type="button" id="lw-pair" aria-pressed="false">Compare two captures</button>
-        <button type="button" id="lw-verify" aria-pressed="false">Verify saved evidence</button></div>
+        <button type="button" id="lw-verify" aria-pressed="false">Verify saved evidence</button>
+        <button type="button" id="lw-har" aria-pressed="false">Import HAR</button></div>
         <p id="lw-verify-note" hidden>Load a complete Lens evidence JSON record in Source A, up to 2 MiB. Lens regenerates supported decoding routes and compares exact payload bytes. Recipes supplied by the file stay inert. A match checks consistency, not authenticity.</p>
+        <p id="lw-har-note" hidden>Load a browser HAR 1.2 capture in Source A, up to 2 MiB and 256 entries. List the entries, then choose one recorded request or response body. The complete capture stays here. Missing bodies, parameters and files are not reconstructed; no request is sent.</p>
         <section class="lw-sources" aria-label="Original sources"></section>
+        <section id="lw-har-selection" class="lw-report" aria-label="HAR body selection" hidden>
+        <h2 tabindex="-1">Choose a recorded body</h2>
+        <p id="lw-har-count"></p><p>The initial selection is a starting point. Request and response bodies are separate observations.</p>
+        <label for="lw-har-entry">Recorded entry</label><select id="lw-har-entry"></select>
+        <label for="lw-har-part">Recorded body</label><select id="lw-har-part"><option value="request">Request body</option><option value="response">Response body</option></select>
+        <p id="lw-har-body-note"></p>
+        <p class="lw-source-note">Only postData.text or response content.text is selected. Recorded response text is already HTTP decoded, unless its HAR encoding says Base64. Headers, URL parameters and multipart fields are outside this import. A sanitized capture may omit credentials.</p>
+        <button type="button" id="lw-har-find" class="lw-primary">Find JSON in selected body</button></section>
         <div class="lw-run"><button type="button" id="lw-run" class="lw-primary">Find JSON</button>
-        <button type="button" id="lw-cancel" hidden>Cancel</button>
+        <button type="button" id="lw-cancel" disabled>Cancel</button>
         <button type="button" id="lw-demo">Try the fictional example</button>
         <button type="button" id="lw-http-demo">Try an HTTP request</button>
         <button type="button" id="lw-evidence-demo" hidden>Try a saved example</button>
         <button type="button" id="lw-share" hidden>Prepare sharing copy</button>
         <button type="button" id="lw-share-demo" hidden>Try a sharing example</button>
+        <button type="button" id="lw-har-demo" hidden>Try a HAR example</button>
         <details class="lw-depth" id="lw-settings"><summary>Search settings</summary><label for="lw-depth">Layer limit</label>
         <select id="lw-depth"><option>1</option><option>2</option><option selected>3</option><option>4</option><option>5</option></select>
         <p>Default: 3 layers. Recognized profiles only, up to 64 KiB per source. Increasing depth does not increase trust.</p></details></div>
@@ -63,7 +75,7 @@ export default function setupLensWorkspace() {
         get("lw-status").textContent = message;
     };
     const sources = [{text: "", revision: 0}, {text: "", revision: 0}];
-    let pair = false, verifying = false, reports = [], worker = null, job = 0, sharingRecord = null, sharingLabel = null;
+    let pair = false, verifying = false, importingHar = false, harEntries = [], reports = [], worker = null, job = 0, sharingRecord = null, sharingLabel = null;
     get("lw-share-fields").value = DEFAULT_SHARING_FIELDS;
 
     /** Stop CPU work and reject any late reply before changing a source. */
@@ -71,15 +83,19 @@ export default function setupLensWorkspace() {
         job++;
         if (worker) worker.terminate();
         worker = null;
-        get("lw-cancel").hidden = true;
+        get("lw-cancel").disabled = true;
         get("lw-run").disabled = false;
         get("lw-share").disabled = false;
+        updateHarChoice();
         get("lw-results").removeAttribute("aria-busy");
     }
 
     /** A source or mode change invalidates every dependent result. */
-    function invalidate(clearSharing=true) {
+    function invalidate(clearSharing=true, clearHar=true) {
         stop(); reports = [];
+        if (clearHar) {
+            harEntries = []; get("lw-har-selection").hidden = true;
+        }
         if (clearSharing) {
             sharingRecord = null; sharingLabel = null; get("lw-sharing").hidden = true;
             get("lw-share").hidden = !verifying; get("lw-share").textContent = "Prepare sharing copy";
@@ -98,14 +114,14 @@ export default function setupLensWorkspace() {
         const revision = ++sources[index].revision;
         try {
             if (!file) return;
-            const limit = verifying ? 2097152 : 65536;
-            if (file.size > limit) throw new RangeError(`Each source is limited to ${verifying ? "2 MiB" : "64 KiB"}. The file was not shortened.`);
+            const limit = verifying || importingHar ? 2097152 : 65536;
+            if (file.size > limit) throw new RangeError(`Each source is limited to ${verifying || importingHar ? "2 MiB" : "64 KiB"}. The file was not shortened.`);
             const text = readLensSource(await file.arrayBuffer(), limit);
             if (revision !== sources[index].revision) return;
             invalidate(); sources[index].text = text;
             get(`lw-input-${index}`).value = text;
             sourceNote(index, `${file.name} · original UTF-8 text retained; editing creates a new source`);
-            status(`Source ${index ? "B" : "A"} loaded. Choose ${verifying ? "Check saved evidence" : "Find JSON"} when ready.`);
+            status(`Source ${index ? "B" : "A"} loaded. Choose ${verifying ? "Check saved evidence" : importingHar ? "List HAR entries" : "Find JSON"} when ready.`);
         } catch (error) {
             if (revision === sources[index].revision) status(`${error.message} Previous source retained.`);
         }
@@ -165,8 +181,20 @@ export default function setupLensWorkspace() {
             section.className = "lw-report";
             const heading = document.createElement("h2");
             heading.tabIndex = -1;
-            heading.textContent = `Source ${index ? "B" : "A"} · ${report.outputs.length} JSON layer${report.outputs.length === 1 ? "" : "s"}`;
+            const origin = report.harSelection;
+            const sourceLabel = origin ? `HAR entry ${origin.entry} · ${origin.field.includes(".request.") ? "request" : "response"} body` : `Source ${index ? "B" : "A"}`;
+            heading.textContent = `${sourceLabel} · ${report.outputs.length} JSON layer${report.outputs.length === 1 ? "" : "s"}`;
             section.appendChild(heading);
+            if (origin) {
+                const scope = document.createElement("p");
+                scope.textContent = `${origin.field} · ${origin.representation}. Recipes and saved evidence start from this selected body, not the complete HAR or original wire bytes.`;
+                section.appendChild(scope);
+                const label = document.createElement("label"); label.htmlFor = "lw-har-selected-text";
+                label.textContent = "Selected body — complete";
+                const selected = document.createElement("textarea"); selected.id = label.htmlFor;
+                selected.readOnly = true; selected.spellcheck = false; selected.value = report.original;
+                section.append(label, selected);
+            }
             const content = document.createElement("div");
             content.innerHTML = presentPayloadTrail(report, {
                 recipeUrl: recipe => recipeUrl(recipe, report.original),
@@ -177,7 +205,7 @@ export default function setupLensWorkspace() {
                 link.title = "Open this recipe with the original source in a new tab";
             });
             content.querySelectorAll(".mj-action-note").forEach(note => {
-                note.textContent = "Opens a recipe with this source in a new tab.";
+                note.textContent = origin ? "Opens a recipe starting from this selected body in a new tab." : "Opens a recipe with this source in a new tab.";
             });
             content.querySelectorAll(".mj-meta").forEach(note => {
                 if (note.textContent.startsWith("Depth sets")) note.textContent = "The layer limit comes from Search settings. Only recognized profiles are followed.";
@@ -198,7 +226,7 @@ export default function setupLensWorkspace() {
                     try {
                         const selected = Number(select.value);
                         previewSharing(createJsonEvidence(report.outputs[selected], {report, mode: "JSON payload trail", index: selected, count: report.outputs.length}),
-                            `Source ${index ? "B" : "A"} · result ${selected + 1}`);
+                            `${sourceLabel} · result ${selected + 1}`);
                     } catch (error) {
                         status(error.message);
                     }
@@ -264,10 +292,34 @@ export default function setupLensWorkspace() {
 
     /** A selected-result record is retained separately from Source A/B. */
     function previewSharing(text, label=sharingLabel || "Saved record in Source A") {
-        invalidate(false); sharingRecord = text; sharingLabel = label;
+        invalidate(false, false); sharingRecord = text; sharingLabel = label;
         get("lw-sharing").hidden = false; get("lw-share").hidden = false;
         get("lw-share").textContent = "Refresh sharing copy";
         run("lensShare", [text]);
+    }
+
+    /** Selection changes discard dependent results without discarding the capture. */
+    function updateHarChoice() {
+        const entry = harEntries[Number(get("lw-har-entry").value)];
+        const part = entry?.parts.find(item => item.part === get("lw-har-part").value);
+        get("lw-har-find").disabled = !!worker || !part?.available;
+        get("lw-har-body-note").textContent = part?.note || "List entries to inspect recorded bodies.";
+    }
+
+    /** Entry labels are untrusted text, never markup or navigable capture URLs. */
+    function showHarEntries(entries) {
+        harEntries = entries;
+        const select = get("lw-har-entry"); select.replaceChildren();
+        entries.forEach(entry => {
+            const option = document.createElement("option"); option.value = entry.index;
+            option.textContent = entry.label; select.appendChild(option);
+        });
+        get("lw-har-part").value = "request";
+        get("lw-har-count").textContent = `${entries.length} recorded entries. Source A retains the complete capture.`;
+        get("lw-har-selection").hidden = false; updateHarChoice();
+        status("Entries listed. Choose an entry and body, then find JSON. The capture has not been replaced.");
+        get("lw-har-selection").scrollIntoView({block: "start"});
+        get("lw-har-selection").querySelector("h2").focus({preventScroll: true});
     }
 
     /** A worker per job provides cancellation and isolates the original recipe. */
@@ -275,8 +327,9 @@ export default function setupLensWorkspace() {
         stop();
         const id = job;
         worker = new LensWorker();
-        get("lw-run").disabled = true; get("lw-cancel").hidden = false;
+        get("lw-run").disabled = true; get("lw-cancel").disabled = false;
         get("lw-share").disabled = true;
+        get("lw-har-find").disabled = true;
         get("lw-results").setAttribute("aria-busy", "true");
         status("Working locally… Cancel remains available while native modules load and the bounded check runs.");
         const fail = message => {
@@ -289,7 +342,9 @@ export default function setupLensWorkspace() {
             if (message.action === "lensError") fail(message.error);
             if (message.action !== "lensComplete") return;
             stop();
-            if (action === "lensShare") {
+            if (action === "lensHarIndex") {
+                showHarEntries(message.result);
+            } else if (action === "lensShare") {
                 showSharing(message.result);
             } else if (action === "lensCompare") {
                 get("lw-comparison").innerHTML = message.result.html;
@@ -308,36 +363,47 @@ export default function setupLensWorkspace() {
         });
         worker.postMessage({action: "docURL", data: document.location.href.split(/[#?]/)[0].replace(/\/[^/]*$/, "")});
         worker.postMessage({action, id, sources: texts, depth: Number(get("lw-depth").value),
+            har: action === "lensHarInvestigate" ? {entry: Number(get("lw-har-entry").value), part: get("lw-har-part").value} : undefined,
             sharing: action === "lensShare" ? {memberNames: get("lw-share-fields").value, exactText: get("lw-share-literals").value} : undefined});
     }
 
     /** Switch task while retaining both source texts for deliberate reuse. */
     function setMode(value) {
-        pair = value === "compare"; verifying = value === "verify";
+        pair = value === "compare"; verifying = value === "verify"; importingHar = value === "har";
         sources.forEach(source => source.revision++);
         invalidate(); get("lw-source-1").hidden = !pair;
-        get("lw-single").setAttribute("aria-pressed", String(!pair && !verifying));
+        get("lw-single").setAttribute("aria-pressed", String(!pair && !verifying && !importingHar));
         get("lw-pair").setAttribute("aria-pressed", String(pair));
         get("lw-verify").setAttribute("aria-pressed", String(verifying));
+        get("lw-har").setAttribute("aria-pressed", String(importingHar));
+        get("lw-har-note").hidden = !importingHar; get("lw-har-demo").hidden = !importingHar;
         get("lw-verify-note").hidden = !verifying;
         get("lw-evidence-demo").hidden = !verifying;
         get("lw-share-demo").hidden = !verifying;
-        for (const id of ["lw-demo", "lw-http-demo", "lw-settings"]) get(id).hidden = verifying;
-        get("lw-input-0").placeholder = verifying ? "Paste one complete saved Lens evidence JSON record…" : "Paste JSON, encoded data, or a complete HTTP/1.x request…";
+        for (const id of ["lw-demo", "lw-http-demo"]) get(id).hidden = verifying || importingHar;
+        get("lw-settings").hidden = verifying;
+        get("lw-input-0").placeholder = verifying ? "Paste one complete saved Lens evidence JSON record…" : importingHar ? "Paste a complete HAR 1.2 capture…" : "Paste JSON, encoded data, or a complete HTTP/1.x request…";
         sources.forEach((source, index) => {
-            sourceNote(index, `Retained source · ${verifying ? "2 MiB evidence record" : "64 KiB source"} limit; choose a new file or edit to replace`);
+            sourceNote(index, `Retained source · ${verifying || importingHar ? "2 MiB record/capture" : "64 KiB source"} limit; choose a new file or edit to replace`);
         });
-        get("lw-run").textContent = verifying ? "Check saved evidence" : pair ? "Find JSON in both sources" : "Find JSON";
-        status(verifying ? "Load saved evidence or try the saved example, then check it. Nothing runs while you type." : "Choose a file or paste data, then find JSON.");
+        get("lw-run").textContent = verifying ? "Check saved evidence" : importingHar ? "List HAR entries" : pair ? "Find JSON in both sources" : "Find JSON";
+        status(verifying ? "Load saved evidence or try the saved example, then check it. Nothing runs while you type." : importingHar ? "Load a HAR capture or try the example, then list its entries. Nothing runs while you type." : "Choose a file or paste data, then find JSON.");
     }
     get("lw-single").addEventListener("click", () => setMode("investigate"));
     get("lw-pair").addEventListener("click", () => setMode("compare"));
     get("lw-verify").addEventListener("click", () => setMode("verify"));
+    get("lw-har").addEventListener("click", () => setMode("har"));
     get("lw-share").addEventListener("click", () => previewSharing(sharingRecord ?? sources[0].text));
-    for (const id of ["lw-share-fields", "lw-share-literals"]) get(id).addEventListener("input", () => invalidate(false));
-    get("lw-depth").addEventListener("change", invalidate);
+    for (const id of ["lw-share-fields", "lw-share-literals"]) get(id).addEventListener("input", () => invalidate(false, false));
+    get("lw-depth").addEventListener("change", () => invalidate(true, false));
+    for (const id of ["lw-har-entry", "lw-har-part"]) get(id).addEventListener("change", () => {
+        invalidate(true, false); updateHarChoice(); status("Body selection changed. Find JSON again to refresh results.");
+    });
+    get("lw-har-find").addEventListener("click", () => {
+        invalidate(true, false); run("lensHarInvestigate", [sources[0].text]);
+    });
     get("lw-run").addEventListener("click", () => {
-        invalidate(); run(verifying ? "lensVerify" : "lensInvestigate", sources.slice(0, pair ? 2 : 1).map(source => source.text));
+        invalidate(); run(verifying ? "lensVerify" : importingHar ? "lensHarIndex" : "lensInvestigate", sources.slice(0, pair ? 2 : 1).map(source => source.text));
     });
     get("lw-cancel").addEventListener("click", () => {
         stop(); status("Cancelled. Sources retained; no new completed result is claimed.");
@@ -375,6 +441,11 @@ export default function setupLensWorkspace() {
         get("lw-share-fields").value = DEFAULT_SHARING_FIELDS; get("lw-share-literals").value = "";
         sourceNote(0, "Fictional sharing example · invented token and identity");
         previewSharing(sources[0].text, "Fictional sharing example in Source A");
+    });
+    get("lw-har-demo").addEventListener("click", () => {
+        setMode("har"); sources[0].text = lensHarExample(); get("lw-input-0").value = sources[0].text;
+        sourceNote(0, "Fictional HAR · request and response disagree; second body was not recorded");
+        status("HAR example loaded. List its entries, then choose a recorded body.");
     });
     opener.addEventListener("click", () => {
         native.hidden = true; root.hidden = false; get("lw-input-0").focus();

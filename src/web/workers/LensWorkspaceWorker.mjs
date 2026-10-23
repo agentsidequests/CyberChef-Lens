@@ -9,14 +9,24 @@ import {investigateLensSource, compareLensSources} from "../../core/lib/LensWork
 import {verifyLensEvidence} from "../../core/lib/LensVerification.mjs";
 import {presentLensVerification} from "../../core/lib/MagicJsonPresentation.mjs";
 import {createLensSharingCopy} from "../../core/lib/LensSharing.mjs";
+import {inspectLensHar, selectLensHar} from "../../core/lib/LensHar.mjs";
 
 self.addEventListener("message", async event => {
-    const {action, id, sources, depth, sharing} = event.data;
-    if (!["lensInvestigate", "lensCompare", "lensVerify", "lensShare"].includes(action)) return;
+    const {action, id, sources, depth, sharing, har} = event.data;
+    if (!["lensInvestigate", "lensCompare", "lensVerify", "lensShare", "lensHarIndex", "lensHarInvestigate"].includes(action)) return;
     try {
         let result;
         if (!Array.isArray(sources) || sources.length < 1 || sources.length > 2) throw new TypeError("Choose one or two sources.");
-        if (action === "lensShare") {
+        if (action === "lensHarIndex" || action === "lensHarInvestigate") {
+            if (sources.length !== 1) throw new TypeError("Load one complete HAR capture in Source A.");
+            if (action === "lensHarIndex") result = inspectLensHar(sources[0]);
+            else {
+                const selected = selectLensHar(sources[0], har);
+                const report = await investigateLensSource(selected.text, depth);
+                report.harSelection = selected.origin;
+                result = [report];
+            }
+        } else if (action === "lensShare") {
             if (sources.length !== 1 || typeof sources[0] !== "string") throw new TypeError("Load one saved evidence record.");
             result = createLensSharingCopy(new TextEncoder().encode(sources[0]), sharing);
         } else if (action === "lensVerify") {

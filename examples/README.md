@@ -1,5 +1,12 @@
 # A session export that deserves a closer look
 
+For a browser capture example, choose **Lens workspace → Import HAR → Try a HAR
+example**, or load `lens-network.har`. List the entries, choose request/response,
+then find JSON. The fictional request says `queued`; the Base64 response says
+`released`. Entry 2 has no recorded body. The complete capture stays in Source A,
+while result recipes/evidence start from the selected body. See the
+[HAR guide](../docs/USAGE.md#import-a-har-capture).
+
 This is a **fictional training fixture**, not a captured user session. Both
 signatures are fabricated. Do not use it as an authentication or exploit test.
 
