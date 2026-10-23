@@ -352,12 +352,15 @@ patched audit. Absence from an advisory list is not a security guarantee.
 Pako's published code is unmodified and its MIT AND Zlib notices are retained
 in the root third-party notices file.
 
-Compatibility checks also reproduced an existing Node output-boundary issue:
-Resize Image and Convert Image Format return a Buffer's entire backing
-ArrayBuffer, which can include unrelated bytes when Node pools allocations.
-This occurs with both Jimp versions and is outside this dependency update.
-The browser image path is checked separately; passing dependency and fixture
-tests does not qualify these Node image outputs. A separate repair is required.
+The 17 image operations that previously returned a Jimp encoder Buffer's entire
+backing ArrayBuffer now copy only its byteOffset/byteLength range. This prevents
+adjacent allocation bytes from entering image output when Node pools or slices
+Buffers. A regression surrounds real encoded images with sentinel bytes and
+checks every repaired operation's exact length, content and output ownership.
+The normal Node API entry is also checked with pooling enabled, five input
+formats, four output formats and invalid-input controls. Browser image behavior
+has a separate acceptance check. This is a narrow output-boundary repair, not
+a review of all Buffer uses, image-decoder safety or resource limits.
 
 This candidate does not claim an exhaustive security review, a complete browser
 matrix, a hard sandbox, a fresh-install pass on every platform or production

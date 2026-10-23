@@ -67,7 +67,7 @@ class ImageOpacity extends Operation {
             } else {
                 imageBuffer = await image.getBuffer(image.mime);
             }
-            return imageBuffer.buffer;
+            return imageBuffer.buffer.slice(imageBuffer.byteOffset, imageBuffer.byteOffset + imageBuffer.byteLength);
         } catch (err) {
             throw new OperationError(`Error changing image opacity. (${err})`);
         }
