@@ -105,12 +105,12 @@ function jsonEnvelope(text) {
                  {name: "Signature records and headers (unverified)", value: JSON.stringify(records)}]}]};
 }
 
-/** Recognize same-name data/signature Cookie pairs, never choose duplicate names. */
+/** One copied Cookie field, with at most one terminal LF/CRLF; never choose duplicates. */
 function cookiePairs(text) {
-    const original = text;
-    text = text.trim();
+    const field = text.replace(/\r?\n$/, "");
+    text = field.trim();
     if (!/(?:^|;\s*)[^;=\s]+\.sig=/.test(text.replace(/^Cookie:\s*/i, ""))) return {handled: false};
-    if (/[\r\n]/.test(original)) return unsupported("Multiline Cookie input is outside this extraction.");
+    if (/[\r\n]/.test(field)) return unsupported("Paste one unquoted Cookie field only, with at most one terminal LF or CRLF; header blocks, folded lines and blank lines are not extracted.");
     const cookies = new Map();
     for (const part of text.replace(/^Cookie:\s*/i, "").split(";")) {
         const match = part.trim().match(/^([!#$%&'*+.^_`|~A-Za-z0-9-]+)=([\x21-\x3A\x3C-\x7E]*)$/);

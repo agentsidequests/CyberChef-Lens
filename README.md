@@ -214,6 +214,14 @@ does not authenticate a session or verify a JWT. Header blocks, quoted/curl
 snippets, padded fields and compressed or detached/unencoded Bearer payloads
 remain outside this profile. General-purpose **Any** is unchanged.
 
+## Copied Cookie fields
+
+For a paired Cookie field, one copied terminal LF or CRLF is accepted too. The
+complete original input, including that ending, remains in the evidence record;
+native replay extracts the exact payload without rewriting it. This still means
+one unquoted field or Cookie-pair value, not a whole request: header blocks,
+folded lines, extra blank lines, bare CR and duplicate names are refused.
+
 ## Roadmap
 
 The experimental JSON investigation, multi-layer payload trail and lossless JSON

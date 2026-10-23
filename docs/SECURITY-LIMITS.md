@@ -137,6 +137,16 @@ remain. No network request, key lookup, signature verification, authorization,
 issuer, schema or claim validation is performed. Generic arrays are not JWT
 Claims Set objects. No new general-purpose Magic recognizer is added.
 
+## Copied Cookie field endings
+
+One unquoted paired Cookie field or Cookie-pair value may end with one LF or
+CRLF. Only recognition removes that single terminal ending; the complete input
+is retained, and native recipe replay still runs on its exact original bytes.
+Any remaining CR/LF refuses the carrier route, including leading/folded lines,
+header blocks, extra blank lines and bare CR. Quoted values and duplicate Cookie
+names remain refused. This is a narrow copied-field profile, not general HTTP
+parsing, credential validation or a choice among conflicting header fields.
+
 ## Selected parsing cautions
 
 Lens cards and JSON Beautify's opt-in lossless formatted view inspect strict JSON

@@ -56,6 +56,11 @@ These files are included in Lens's standalone ZIP under `examples/`. Keep that
 folder separate from Input: drag the individual input file, not the folder.
 The examples require no network service, key or API account.
 
+When pasting one paired Cookie field directly, one terminal LF or CRLF is
+accepted. The saved original input keeps that ending; extracted payload bytes
+are unchanged. Do not paste a complete request or folded/multiline headers.
+Blank lines, bare CR, quoted values and duplicate Cookie names remain refused.
+
 ## A copied Authorization field
 
 `lens-bearer-header.txt` contains the same fictional compact token with an

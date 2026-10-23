@@ -409,5 +409,24 @@ TestRegister.addTests([
         input: "Bearer " + Buffer.from('{"alg":"HS256"}').toString("base64url") + "." + Buffer.from('{"case":"copied-trail"}').toString("base64url") + "." + "A".repeat(43),
         expectedMatch: /Layer 1[\s\S]+Bearer field \/ compact token[\s\S]+Load full JSON recipe/,
         recipeConfig: [{op: "Magic", args: [3, false, false, "", "JSON payload trail"]}]
+    },
+    {
+        name: "Magic wrappers: one copied Cookie CRLF preserves the payload",
+        input: "Cookie: cart.v2=" + Buffer.from('{"order_id":9007199254741099,"stage":"queued","\\u0073tage":"review"}').toString("base64") + "; cart.v2.sig=" + "A".repeat(43) + "\r\n",
+        expectedMatch: /Extracted Cookie payload \(unverified\)[\s\S]+2 parsing cautions[\s\S]+9007199254741099/,
+        recipeConfig: [{op: "Magic", args: [3, false, false, "", "JSON wrappers"]}]
+    },
+    {
+        name: "Magic wrappers: copied Cookie blank line remains refused",
+        input: "Cookie: cart=e30=; cart.sig=" + "A".repeat(43) + "\r\n\r\n",
+        expectedMatch: /No supported JSON wrapper confirmed[\s\S]+blank lines are not extracted/,
+        unexpectedMatch: /Load payload recipe|Load field recipe/,
+        recipeConfig: [{op: "Magic", args: [3, false, false, "", "JSON wrappers"]}]
+    },
+    {
+        name: "Magic payload trail: copied Cookie LF composes with an unsigned compact field",
+        input: "Cookie: cart=" + Buffer.from("eyJhbGciOiJub25lIn0." + Buffer.from('{"fresh":"copied-cookie"}').toString("base64url") + ".").toString("base64") + "; cart.sig=" + "A".repeat(43) + "\n",
+        expectedMatch: /Layer 2[\s\S]+copied-cookie/,
+        recipeConfig: [{op: "Magic", args: [3, false, false, "", "JSON payload trail"]}]
     }
 ]);
