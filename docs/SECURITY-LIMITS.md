@@ -19,6 +19,18 @@ refused rather than truncated. Existing native output-saving remains available.
 The complete evidence-text view has the same privacy boundary and export budget;
 it provides manual copying when a browser's download path is unavailable.
 
+**Imported evidence is data, not executable authority.** Inspect Lens Evidence
+checks a bounded version-1 record profile and recomputes payload cautions. Saved
+recipes are displayed but never loaded or executed. Recovery returns a saved
+string; it does not rederive the payload, authenticate the record or verify its
+original investigation. Review leaves the complete record as its output, while
+recovery modes return only the chosen saved string. Later operations in the
+user's current recipe still apply normally. Record nesting is capped at 64,
+with at most 64 inert routes, 256 steps per route and 256 saved warnings. Duplicate
+outer metadata names, unsupported versions, invalid Unicode, inconsistent byte
+lengths and malformed/scalar payloads cannot earn recovery actions. Payload
+duplicate members remain intact and receive fresh cautions, not metadata refusal.
+
 The JSON goal checks complete UTF-8 JSON objects/arrays within the candidates it
 actually considers. It does not establish intended encoding, meaning, schema,
 producer identity or general absence of duplicate payload keys. Duplicate-key

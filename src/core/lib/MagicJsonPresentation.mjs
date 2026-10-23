@@ -352,3 +352,28 @@ export function presentPayloadTrail(report, context) {
         "A complete check covers only these profiles and budgets, not every possible decoding.</p></details></section>";
     return output;
 }
+
+/** Imported records are claims; only current payload syntax/cautions are checked. */
+export function presentLensEvidence(report, context) {
+    return '<section class="magic-json" data-lens-import-report="true">' + styles +
+        "<h2>Reopen a Lens evidence record</h2>" +
+        '<div class="mj-warning" role="note"><strong>Saved recipes were not executed.</strong> This editable record is not authenticated. Recovering a saved string does not recheck its original decoding or prove that the saved input produced it.</div>' +
+        `<p class="mj-meta">Version-1 record structure and declared byte counts checked · ${report.payloadBytes} payload bytes · ${report.inputBytes} saved-input bytes</p>` +
+        '<article class="mj-card"><div class="mj-head"><h3>Saved payload · syntax checked now</h3>' +
+        '<p class="mj-meta">Recomputed now: selected parsing cautions below. Imported caution counts are not trusted.</p>' +
+        presentJsonHazards(report.payload) +
+        '<p class="mj-meta">Both recovery modes can reveal secrets. They change Output, not Input, and do not run any saved recipe.</p><div class="mj-actions">' +
+        `<a class="mj-action" href="${context.recipeUrl("Payload text")}">Recover saved payload</a>` +
+        `<a href="${context.recipeUrl("Magic-step input")}">Recover saved Magic-step input</a></div></div>` +
+        '<div class="mj-body">' + preview(report.payload) +
+        "<details><summary>Recorded investigation — not rerun</summary>" +
+        pre(JSON.stringify(report.investigation, null, 2), "Recorded investigation metadata") + "</details>" +
+        "<details><summary>Saved warnings — not independently verified</summary>" +
+        "<ul>" + report.savedWarnings.slice(0, 16).map(note => `<li>${escape(note)}</li>`).join("") + "</ul>" +
+        (report.savedWarnings.length > 16 ? `<p class="mj-meta">Showing 16 of ${report.savedWarnings.length} saved warnings. The complete record remains in Input.</p>` : "") + "</details>" +
+        `<details><summary>Saved recipes — read-only · ${report.routes.length} route${report.routes.length === 1 ? "" : "s"}</summary>` +
+        '<p class="mj-meta">These are untrusted record contents, not checked replay actions. No stored operation is loaded or executed by this inspector.</p>' +
+        report.routes.map((route, index) => "<details>" + `<summary>Saved route ${index + 1}</summary>` +
+            pre(JSON.stringify(route.recipe, null, 2), `Saved route ${index + 1} recipe`) + "</details>").join("") + "</details>" +
+        '<p class="mj-meta">Review leaves the complete record unchanged as the operation output. Later recipe operations receive that record. Recovery modes return only the selected saved string; surrounding operations still apply.</p></div></article></section>';
+}

@@ -20,6 +20,13 @@ search status. The payload is stored as a string, not parsed account/role values
 These fictional files are safe training material; real input may contain live
 credentials. Review any saved result before sharing it.
 
+To reopen that record, copy the complete evidence JSON (not just its payload),
+paste it into Input and replace the current recipe with **Inspect Lens Evidence**.
+You can find it by searching Operations for “Lens”. Review shows fresh payload
+cautions without executing any saved recipe. Use **Recover saved payload** to
+return the exact reference text, or **Recover saved Magic-step input** for the
+saved input. Neither action overwrites Input or authenticates the record.
+
 The three logical layers are Base64 → paired Cookie → compact token → JSON.
 The final `lens-investigation-payload.txt` is the exact 100-byte reference,
 including its final LF. The input file also ends in LF; do not delete characters

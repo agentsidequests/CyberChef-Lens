@@ -71,6 +71,9 @@ Available now:
 - **Save this result:** download the exact decoded JSON, or keep a portable
   evidence JSON with its input, replay recipes, warnings and search status.
   Downloads are explicit and unredacted; review them before sharing.
+- **Reopen a record:** Inspect Lens Evidence recovers exact saved input/payload
+  text, checks the supported record structure and recomputes payload cautions.
+  Stored recipes stay read-only; reopening never executes them.
 - Replays native candidate recipes on complete input and checks strict UTF-8 and
   whole-document JSON, instead of accepting a valid-looking prefix.
 - Retains competing exact texts and recipe provenance. A syntax match does not
@@ -212,11 +215,31 @@ what was originally pasted into CyberChef's Input pane.
 
 The file does not include other results, authenticate the message or establish
 chain of custody. It is ordinary editable JSON and may contain live credentials.
-There is no redaction, automatic download, import feature or new network call.
+There is no redaction, automatic download or new network call.
 The total generated download text is capped at 2 MiB per presentation. If the
 complete snapshot exceeds the budget, has more than 64 retained routes or lacks
 exact UTF-8 input, Lens refuses that download rather than quietly shortening it.
 The checked results and normal native recipe actions remain available.
+
+To reopen a record, paste its complete evidence JSON into **Input** and add
+**Inspect Lens Evidence** (search Operations for “Lens”). Leave **Output → Review**
+selected. The review checks the supported version-1 structure, strict UTF-8,
+declared byte counts and complete payload syntax, then recomputes selected
+parsing cautions. **Recover saved payload** and **Recover saved Magic-step input**
+return those exact strings as Output; Input and surrounding operations stay put.
+
+This reads a record, not a signed receipt. A changed record can still be valid
+JSON. Reopening does not establish who saved it, prove that its input produced
+its payload, or rerun the investigation. Saved recipes are displayed as inert
+text; none are loaded or executed. Recorded status is a claim from that file,
+not a fresh complete-search result. Ordinary JSON parsing and manual extraction
+can recover the fields too; the inspector adds a guarded review and exact-string
+recovery workflow.
+
+The reopening profile accepts up to 2 MiB of record text, 64 outer containers,
+64 KiB saved input, 1 MiB payload, 64 routes, 256 steps per saved route and 256
+saved warnings. Unsupported versions, ambiguous duplicate metadata names,
+malformed fields and inconsistent byte counts are refused without repair.
 
 ## Run from source
 
