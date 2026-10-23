@@ -42,7 +42,9 @@ export default function setupLensWorkspace() {
         <label for="lw-har-part">Recorded body</label><select id="lw-har-part"><option value="request">Request body</option><option value="response">Response body</option></select>
         <p id="lw-har-body-note"></p>
         <p class="lw-source-note">Only postData.text or response content.text is selected. Recorded response text is already HTTP decoded, unless its HAR encoding says Base64. Headers, URL parameters and multipart fields are outside this import. A sanitized capture may omit credentials.</p>
-        <button type="button" id="lw-har-find" class="lw-primary">Find JSON in selected body</button></section>
+        <div class="lw-har-actions"><button type="button" id="lw-har-find" class="lw-primary">Find JSON in selected body</button>
+        <button type="button" id="lw-har-compare">Compare request and response</button></div>
+        <p id="lw-har-pair-note" class="lw-source-note"></p></section>
         <div class="lw-run"><button type="button" id="lw-run" class="lw-primary">Find JSON</button>
         <button type="button" id="lw-cancel" disabled>Cancel</button>
         <button type="button" id="lw-demo">Try the fictional example</button>
@@ -173,9 +175,11 @@ export default function setupLensWorkspace() {
     }
 
     /** Render the existing checked cards; source labels and layer choices stay explicit. */
-    function showReports() {
+    function showReports(initialComparison=null) {
         const target = get("lw-results");
         target.replaceChildren();
+        const harPair = reports.length === 2 && reports.every(report => report.harSelection);
+        const shortLabel = (report, index) => report.harSelection ? report.harSelection.field.includes(".request.") ? "Request body" : "Response body" : `Source ${index ? "B" : "A"}`;
         reports.forEach((report, index) => {
             const section = document.createElement("section");
             section.className = "lw-report";
@@ -189,8 +193,8 @@ export default function setupLensWorkspace() {
                 const scope = document.createElement("p");
                 scope.textContent = `${origin.field} · ${origin.representation}. Recipes and saved evidence start from this selected body, not the complete HAR or original wire bytes.`;
                 section.appendChild(scope);
-                const label = document.createElement("label"); label.htmlFor = "lw-har-selected-text";
-                label.textContent = "Selected body — complete";
+                const label = document.createElement("label"); label.htmlFor = index ? `lw-har-selected-text-${index}` : "lw-har-selected-text";
+                label.textContent = harPair ? `${shortLabel(report, index)} — complete` : "Selected body — complete";
                 const selected = document.createElement("textarea"); selected.id = label.htmlFor;
                 selected.readOnly = true; selected.spellcheck = false; selected.value = report.original;
                 section.append(label, selected);
@@ -213,7 +217,7 @@ export default function setupLensWorkspace() {
             section.appendChild(content); target.appendChild(section);
             if (report.outputs.length) {
                 const sharing = document.createElement("div"); sharing.className = "lw-result-share";
-                const label = document.createElement("label"); label.textContent = `Source ${index ? "B" : "A"} result to share `;
+                const label = document.createElement("label"); label.textContent = `${shortLabel(report, index)} result to share `;
                 const select = document.createElement("select"); select.id = `lw-share-choice-${index}`;
                 report.outputs.forEach((group, value) => {
                     const option = document.createElement("option"); option.value = value;
@@ -221,7 +225,7 @@ export default function setupLensWorkspace() {
                 });
                 label.appendChild(select); sharing.appendChild(label);
                 const button = document.createElement("button"); button.type = "button";
-                button.textContent = `Prepare sharing copy from Source ${index ? "B" : "A"}`;
+                button.textContent = `Prepare sharing copy from ${shortLabel(report, index)}`;
                 button.addEventListener("click", () => {
                     try {
                         const selected = Number(select.value);
@@ -234,38 +238,55 @@ export default function setupLensWorkspace() {
                 sharing.appendChild(button); section.appendChild(sharing);
             }
         });
-        if (pair && reports.every(report => report.outputs.length)) {
+        if (harPair || pair && reports.every(report => report.outputs.length)) {
             const controls = document.createElement("section");
             controls.className = "lw-compare";
-            controls.innerHTML = "<h2>Compare selected JSON layers</h2><p>Choose one result from each source. The first listed layer is a starting selection, not a preferred truth.</p>";
+            controls.innerHTML = harPair ? "<h2>Request and response comparison</h2><p>Both bodies belong to the selected HAR entry. The initial comparison uses the original JSON body when available, otherwise the first listed decoded layer. Choose each layer independently; this starting pair is not a preferred truth or proof of a state transition.</p>" : "<h2>Compare selected JSON layers</h2><p>Choose one result from each source. The first listed layer is a starting selection, not a preferred truth.</p>";
             controls.querySelector("h2").tabIndex = -1;
-            reports.forEach((report, index) => {
-                const label = document.createElement("label");
-                label.textContent = `Source ${index ? "B" : "A"} layer `;
-                const select = document.createElement("select");
-                select.id = `lw-choice-${index}`;
-                report.outputs.forEach((group, value) => {
-                    const option = document.createElement("option");
-                    option.value = value;
-                    const source = group.sources[0];
-                    option.textContent = `Result ${value + 1}: ${source.httpOrigin ? source.httpOrigin.field + " · " : ""}layer ${source.depth} · ${group.byteLength} bytes · ${source.kind || "original JSON"}`;
-                    select.appendChild(option);
+            if (reports.every(report => report.outputs.length)) {
+                reports.forEach((report, index) => {
+                    const label = document.createElement("label");
+                    label.textContent = `${shortLabel(report, index)} layer `;
+                    const select = document.createElement("select");
+                    select.id = `lw-choice-${index}`;
+                    report.outputs.forEach((group, value) => {
+                        const option = document.createElement("option");
+                        option.value = value;
+                        const source = group.sources[0];
+                        option.textContent = `Result ${value + 1}: ${source.httpOrigin ? source.httpOrigin.field + " · " : ""}layer ${source.depth} · ${group.byteLength} bytes · ${source.kind || "original JSON"}`;
+                        select.appendChild(option);
+                    });
+                    select.value = initialComparison?.selection?.[index] ?? 0;
+                    select.addEventListener("change", () => {
+                        stop(); get("lw-comparison").replaceChildren(); status("Layer selection changed. Compare again to refresh the comparison.");
+                    });
+                    label.appendChild(select); controls.appendChild(label);
                 });
-                select.addEventListener("change", () => {
-                    stop(); get("lw-comparison").replaceChildren(); status("Layer selection changed. Compare again to refresh the comparison.");
+                const button = document.createElement("button");
+                button.type = "button"; button.textContent = "Compare selected layers"; button.className = "lw-primary";
+                button.addEventListener("click", () => {
+                    get("lw-comparison").replaceChildren();
+                    run("lensCompare", reports.map((report, index) => report.outputs[Number(get(`lw-choice-${index}`).value)].text));
                 });
-                label.appendChild(select); controls.appendChild(label);
-            });
-            const button = document.createElement("button");
-            button.type = "button"; button.textContent = "Compare selected layers"; button.className = "lw-primary";
-            button.addEventListener("click", () => run("lensCompare", reports.map((report, index) => report.outputs[Number(get(`lw-choice-${index}`).value)].text)));
-            controls.appendChild(button);
+                controls.appendChild(button);
+            }
             const comparison = document.createElement("div"); comparison.id = "lw-comparison"; controls.appendChild(comparison);
             target.prepend(controls);
         }
-        status(`${reports.map((report, index) => `Source ${index ? "B" : "A"}: ${report.outputs.length} JSON layer(s), ${report.httpRequest?.status === "unsupported" ? "HTTP import refused" : report.status}${report.depthLimited ? ", layer limit reached" : ""}`).join(". ")}. Inspect the cautions before using a result.`);
+        status(`${reports.map((report, index) => `${shortLabel(report, index)}: ${report.outputs.length} JSON layer(s), ${report.httpRequest?.status === "unsupported" ? "HTTP import refused" : report.status}${report.depthLimited ? ", layer limit reached" : ""}`).join(". ")}. Inspect the cautions before using a result.`);
+        if (initialComparison) showComparison(initialComparison);
         target.scrollIntoView({block: "start"});
         target.querySelector("h2").focus({preventScroll: true});
+    }
+
+    /** Only generated comparison HTML is rendered; refusals remain plain text. */
+    function showComparison(result) {
+        if (result.error) {
+            get("lw-comparison").textContent = result.error; status(result.error);
+        } else {
+            get("lw-comparison").innerHTML = result.html;
+            status(`Comparison complete: ${result.report.total} change records across the selected layers. Inspect both body origins and parsing cautions.`);
+        }
     }
 
     /** Render only the newly constructed copy; no original record becomes a link. */
@@ -304,6 +325,11 @@ export default function setupLensWorkspace() {
         const part = entry?.parts.find(item => item.part === get("lw-har-part").value);
         get("lw-har-find").disabled = !!worker || !part?.available;
         get("lw-har-body-note").textContent = part?.note || "List entries to inspect recorded bodies.";
+        const unavailable = entry?.parts.filter(item => !item.available) || [];
+        get("lw-har-compare").disabled = !!worker || !entry || unavailable.length > 0;
+        get("lw-har-pair-note").textContent = !entry ? "List entries to compare both bodies." : unavailable.length ?
+            unavailable.map(item => `${item.part === "request" ? "Request" : "Response"} body: ${item.note}`).join(" ") :
+            "Both recorded bodies are available. Compare directly, then adjust the request and response JSON layers independently.";
     }
 
     /** Entry labels are untrusted text, never markup or navigable capture URLs. */
@@ -330,6 +356,7 @@ export default function setupLensWorkspace() {
         get("lw-run").disabled = true; get("lw-cancel").disabled = false;
         get("lw-share").disabled = true;
         get("lw-har-find").disabled = true;
+        get("lw-har-compare").disabled = true;
         get("lw-results").setAttribute("aria-busy", "true");
         status("Working locally… Cancel remains available while native modules load and the bounded check runs.");
         const fail = message => {
@@ -344,11 +371,12 @@ export default function setupLensWorkspace() {
             stop();
             if (action === "lensHarIndex") {
                 showHarEntries(message.result);
+            } else if (action === "lensHarPair") {
+                reports = message.result.reports; showReports(message.result.comparison);
             } else if (action === "lensShare") {
                 showSharing(message.result);
             } else if (action === "lensCompare") {
-                get("lw-comparison").innerHTML = message.result.html;
-                status(`Comparison complete: ${message.result.report.total} change records across the selected layers.`);
+                showComparison(message.result);
                 get("lw-comparison").scrollIntoView({block: "start"});
             } else if (action === "lensVerify") {
                 get("lw-results").innerHTML = message.result.html;
@@ -363,7 +391,7 @@ export default function setupLensWorkspace() {
         });
         worker.postMessage({action: "docURL", data: document.location.href.split(/[#?]/)[0].replace(/\/[^/]*$/, "")});
         worker.postMessage({action, id, sources: texts, depth: Number(get("lw-depth").value),
-            har: action === "lensHarInvestigate" ? {entry: Number(get("lw-har-entry").value), part: get("lw-har-part").value} : undefined,
+            har: ["lensHarInvestigate", "lensHarPair"].includes(action) ? {entry: Number(get("lw-har-entry").value), part: get("lw-har-part").value} : action === "lensCompare" ? reports.length === 2 && reports.every(report => !!report.harSelection) : undefined,
             sharing: action === "lensShare" ? {memberNames: get("lw-share-fields").value, exactText: get("lw-share-literals").value} : undefined});
     }
 
@@ -401,6 +429,9 @@ export default function setupLensWorkspace() {
     });
     get("lw-har-find").addEventListener("click", () => {
         invalidate(true, false); run("lensHarInvestigate", [sources[0].text]);
+    });
+    get("lw-har-compare").addEventListener("click", () => {
+        invalidate(true, false); run("lensHarPair", [sources[0].text]);
     });
     get("lw-run").addEventListener("click", () => {
         invalidate(); run(verifying ? "lensVerify" : importingHar ? "lensHarIndex" : "lensInvestigate", sources.slice(0, pair ? 2 : 1).map(source => source.text));

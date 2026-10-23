@@ -5,7 +5,7 @@
  * @license Apache-2.0
  */
 import "../../core/ChefWorker.js";
-import {investigateLensSource, compareLensSources} from "../../core/lib/LensWorkspace.mjs";
+import {investigateLensSource, compareLensSources, investigateLensHarPair} from "../../core/lib/LensWorkspace.mjs";
 import {verifyLensEvidence} from "../../core/lib/LensVerification.mjs";
 import {presentLensVerification} from "../../core/lib/MagicJsonPresentation.mjs";
 import {createLensSharingCopy} from "../../core/lib/LensSharing.mjs";
@@ -13,11 +13,14 @@ import {inspectLensHar, selectLensHar} from "../../core/lib/LensHar.mjs";
 
 self.addEventListener("message", async event => {
     const {action, id, sources, depth, sharing, har} = event.data;
-    if (!["lensInvestigate", "lensCompare", "lensVerify", "lensShare", "lensHarIndex", "lensHarInvestigate"].includes(action)) return;
+    if (!["lensInvestigate", "lensCompare", "lensVerify", "lensShare", "lensHarIndex", "lensHarInvestigate", "lensHarPair"].includes(action)) return;
     try {
         let result;
         if (!Array.isArray(sources) || sources.length < 1 || sources.length > 2) throw new TypeError("Choose one or two sources.");
-        if (action === "lensHarIndex" || action === "lensHarInvestigate") {
+        if (action === "lensHarPair") {
+            if (sources.length !== 1) throw new TypeError("Load one complete HAR capture in Source A.");
+            result = await investigateLensHarPair(sources[0], har?.entry, depth);
+        } else if (action === "lensHarIndex" || action === "lensHarInvestigate") {
             if (sources.length !== 1) throw new TypeError("Load one complete HAR capture in Source A.");
             if (action === "lensHarIndex") result = inspectLensHar(sources[0]);
             else {
@@ -35,7 +38,7 @@ self.addEventListener("message", async event => {
             result = {html: presentLensVerification(verification), counts: verification.counts};
         } else if (action === "lensCompare") {
             if (sources.length !== 2) throw new TypeError("Comparison needs both sources.");
-            result = compareLensSources(...sources);
+            result = compareLensSources(...sources, har === true);
         } else {
             result = [];
             for (const source of sources) result.push(await investigateLensSource(source, depth));

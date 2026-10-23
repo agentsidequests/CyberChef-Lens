@@ -6,6 +6,8 @@ then find JSON. The fictional request says `queued`; the Base64 response says
 `released`. Entry 2 has no recorded body. The complete capture stays in Source A,
 while result recipes/evidence start from the selected body. See the
 [HAR guide](../docs/USAGE.md#import-a-har-capture).
+**Compare request and response** shows the queued/released disagreement and the
+response's added fields directly, with separate layer selectors for each body.
 
 This is a **fictional training fixture**, not a captured user session. Both
 signatures are fabricated. Do not use it as an authentication or exploit test.

@@ -42,6 +42,18 @@ and response bodies that disagree, plus an entry whose body was not recorded.
 Choose a **Recorded entry** and **Recorded body**, then **Find JSON in selected
 body**. Changing either selection removes old results. Nothing runs automatically.
 
+To inspect both sides of the chosen entry, select **Compare request and response**.
+Lens investigates each body independently and shows an initial field comparison
+in one action. The initial pair uses the original JSON body when available,
+otherwise its first retained decoded layer. **Request body layer** and **Response
+body layer** let you change either selection, then **Compare selected layers**.
+The pair is a starting point, not a preferred truth or proof of a state transition.
+Both bodies must be recorded and supported; the action explains unavailable sides.
+No JSON on one side produces an explicit refusal, never an equality conclusion.
+Comparison has its own 64 KiB/16,384-token/64-container bounds; a refusal keeps both
+investigations for inspection or a different layer choice. Request/response result
+cards each retain their exact body, own evidence and correctly named sharing action.
+
 The importer accepts a bounded HAR 1.2 profile: 2 MiB per capture, 256 entries and
 64 nested metadata containers. It rejects duplicate metadata member names, invalid
 UTF-8 and malformed JSON. This is body selection, not full HAR schema validation.

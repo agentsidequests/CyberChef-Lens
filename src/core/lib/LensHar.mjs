@@ -90,7 +90,11 @@ export function inspectLensHar(text) {
 
 /** Reparse the complete retained capture; UI summaries never authorize extraction. */
 export function selectLensHar(text, {entry, part}={}) {
-    const entries = parseHar(text);
+    return selectEntry(parseHar(text), entry, part);
+}
+
+/** Select from one parsed capture; paired bodies cannot cross entry boundaries. */
+function selectEntry(entries, entry, part) {
     if (!Number.isInteger(entry) || entry < 0 || entry >= entries.length || !["request", "response"].includes(part)) {
         throw new RangeError("Choose one listed entry and its request or response body.");
     }
@@ -98,6 +102,18 @@ export function selectLensHar(text, {entry, part}={}) {
     if (!selected.text.length) throw new RangeError("Recorded body is empty (0 bytes). There is no JSON to investigate.");
     const path = `log.entries[${entry}].${part}.${part === "request" ? "postData" : "content"}.text`;
     return {...selected, origin: {entry: entry + 1, field: path, representation: selected.representation}};
+}
+
+/** Both bodies belong to the same explicit entry, with independent representations. */
+export function selectLensHarPair(text, entry) {
+    const entries = parseHar(text);
+    return ["request", "response"].map(part => {
+        try {
+            return selectEntry(entries, entry, part);
+        } catch (error) {
+            throw new TypeError(`${part === "request" ? "Request" : "Response"} body: ${error.message}`);
+        }
+    });
 }
 
 /** A small fictional capture: request/response disagree; a second body is missing. */

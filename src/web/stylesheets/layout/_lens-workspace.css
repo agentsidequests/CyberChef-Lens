@@ -55,8 +55,8 @@
 #lens-workspace .lw-result-share select { margin-left: 8px; max-width: 100%; }
 #lens-workspace #lw-har-selection label { display: block; font-weight: 600; margin: 12px 0 6px; }
 #lens-workspace #lw-har-selection select { display: block; width: 100%; min-width: 0; margin-bottom: 12px; }
-#lens-workspace #lw-har-find { margin-top: 16px; }
-#lens-workspace #lw-har-selected-text { margin: 8px 0 22px; }
+#lens-workspace .lw-har-actions { display: flex; flex-wrap: wrap; gap: 10px; margin: 16px 0 12px; }
+#lens-workspace #lw-har-selected-text, #lens-workspace #lw-har-selected-text-1 { margin: 8px 0 22px; }
 @media (max-width: 600px) {
     #lens-workspace .lw-shell { padding: 0 14px 30px; }
     #lens-workspace .lw-header { align-items: flex-start; padding: 14px 0; }

@@ -22,6 +22,8 @@ Your existing recipe workspace stays available through **Recipe workspace**.
 or response body, then **Find JSON in selected body**. Source A keeps the complete
 capture; recipes and evidence start from the chosen body. Missing bodies and
 unsupported encodings stay explicit. [HAR import scope](docs/USAGE.md#import-a-har-capture).
+For one entry, **Compare request and response** investigates both recorded bodies
+and shows their field differences directly, with independent JSON-layer choices.
 
 You can also paste one **complete HTTP/1.x request**. **Try an HTTP request**
 loads a fictional example whose Authorization payload and JSON body disagree.
