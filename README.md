@@ -81,6 +81,9 @@ the exact output, its source recipe and its cautions together.
 - **Carry the result forward.** **Save this result** offers exact JSON and an
   evidence record. **Inspect Lens Evidence** reopens that record without executing
   its saved recipes. Exports are unredacted; review them before sharing.
+- **Review a sharing copy.** The separate redaction preview lists replaced fields,
+  locations and rule categories without showing removed values. Its local review
+  stays out of the sharing file; inspect the complete copy before sharing.
 
 ## Boundaries worth knowing
 

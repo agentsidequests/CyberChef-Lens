@@ -49,6 +49,14 @@
 #lens-workspace #lw-sharing-payload { min-height: 150px; margin: 10px 0 18px; }
 #lens-workspace #lw-sharing-json { min-height: 340px; margin: 10px 0; }
 #lens-workspace .lw-sharing-count { font-weight: 600; }
+#lens-workspace .lw-redaction-review { margin: 16px 0 22px; }
+#lens-workspace .lw-redaction-review summary { font-weight: 600; }
+#lens-workspace .lw-redaction-scope { font-size: 12px; color: #496171; margin-top: 10px; }
+#lens-workspace .lw-redaction-list { padding-left: 24px; margin: 12px 0; }
+#lens-workspace .lw-redaction-list li { padding: 10px 0; border-top: 1px solid #dce4e9; overflow-wrap: anywhere; }
+#lens-workspace .lw-redaction-list code { color: #203247; background: #eef3f5; white-space: pre-wrap; }
+#lens-workspace .lw-redaction-location, #lens-workspace .lw-redaction-change { display: block; font-size: 12px; margin-top: 4px; }
+#lens-workspace .lw-redaction-location { color: #496171; }
 #lens-workspace .lw-share-download { display: inline-block; border: 1px solid #9cb2bf; border-radius: 5px; padding: 9px 13px; color: #125a70; background: #fff; }
 #lens-workspace .lw-result-share { padding-top: 18px; border-top: 1px solid #c8d5de; margin-top: 18px; }
 #lens-workspace .lw-result-share label { display: block; margin-bottom: 10px; }

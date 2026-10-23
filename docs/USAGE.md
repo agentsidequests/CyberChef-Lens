@@ -103,7 +103,15 @@ get distinct generic names. Rules are literal text, never regex or executable
 paths. Each list allows at most 64 rules of 128 characters, within 8 KiB.
 
 Choose **Refresh sharing copy** after editing rules. Changes to rules, sources or
-mode clear the old result and download link. Review the **Complete sharing JSON**,
+mode clear the old result and download link. **Replacements by field** lists each
+value, whole-subtree or key replacement with its rule category and original
+payload line/column. Paths use the sharing copy's keys, including generic renamed
+keys; `#2` identifies the second occurrence of a repeated name and arrays start
+at index 0. Removed values and literal rule text are not shown. This local review
+stays out of the exported file. It lists at most 128 source-ordered replacements,
+with explicit omitted counts; paths over 512 characters are visibly shortened.
+Large lists start collapsed. Complete counts and modified payload remain visible.
+Review the **Complete sharing JSON**,
 then explicitly download it or select all and copy its text. No file is uploaded
 or shared automatically. No-match results say that payload values remain intact.
 

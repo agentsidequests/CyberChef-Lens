@@ -130,4 +130,66 @@ test("a full-size valid source can expand into a complete output without truncat
     const payload = JSON.stringify(Array.from({length: 7000}, () => 0)), result = create(recordFor(payload), {exactText: "0"});
     assert.equal(result.counts.total, 7000); assert.equal(JSON.parse(payloadOf(result)).length, 7000);
     assert.ok(Buffer.byteLength(result.text) < 1048576);
+    assert.equal(result.review.total, 7000); assert.equal(result.review.rows.length, 128);
+    assert.equal(result.review.truncated, true); assert.equal(result.review.rows[127].path, "$[127]");
+});
+
+test("local review locates duplicate escaped members and array fields in source order", () => {
+    const payload = '{"token":1,"\\u0074oken":2,"rows":[{"password":false},"literal"]}';
+    const result = create(recordFor(payload), {exactText: "literal"});
+    assert.deepEqual(result.review.rows.map(row => [row.path, row.action, row.reason]), [
+        ['$["token"]#1', "value", "member-name"], ['$["token"]#2', "value", "member-name"],
+        ['$["rows"][0]["password"]', "value", "member-name"], ['$["rows"][1]', "value", "literal-text"]
+    ]);
+    assert.equal(result.review.total, result.counts.total); assert.equal(result.review.truncated, false);
+    assert.deepEqual(Object.keys(JSON.parse(result.text).redaction), ["valuesReplaced", "keysReplaced", "omitted", "method"]);
+    assert.ok(!result.text.includes('"review"'));
+});
+
+test("local review uses only renamed keys, including renamed ancestors of other replacements", () => {
+    const result = create(recordFor('{"NAME-CANARY":{"password":"VALUE-CANARY","NAME-CANARY":"VALUE-CANARY"}}'),
+        {exactText: "NAME-CANARY\nVALUE-CANARY"});
+    const review = JSON.stringify(result.review);
+    assert.ok(!review.includes("NAME-CANARY")); assert.ok(!review.includes("VALUE-CANARY"));
+    assert.deepEqual(result.review.rows.map(row => row.path), [
+        '$["[REDACTED KEY 2]"]', '$["[REDACTED KEY 2]"]["password"]',
+        '$["[REDACTED KEY 2]"]["[REDACTED KEY 1]"]', '$["[REDACTED KEY 2]"]["[REDACTED KEY 1]"]'
+    ]);
+    assert.deepEqual(result.review.rows.map(row => row.action), ["key", "value", "key", "value"]);
+    assert.ok(!result.text.includes("CANARY"));
+});
+
+test("whole-subtree review suppresses descendants but retains a separate key rename", () => {
+    const result = create(recordFor('{"secret":{"token":"HIDDEN","password":["HIDDEN"]}}'), {exactText: "secret\nHIDDEN"});
+    assert.equal(result.review.total, 2);
+    assert.deepEqual(result.review.rows.map(row => [row.path, row.action, row.reason]), [
+        ['$["[REDACTED KEY 1]"]', "key", "literal-text"], ['$["[REDACTED KEY 1]"]', "subtree", "member-name"]
+    ]);
+    assert.ok(!JSON.stringify(result.review).includes("HIDDEN"));
+});
+
+test("original payload positions count Unicode characters and CRLF lines", () => {
+    const result = create(recordFor('[\r\n "海😀", "secret"\r\n]'), {exactText: "secret"});
+    assert.deepEqual(result.review.rows, [{path: "$[1]", shortened: false, line: 2, column: 8, action: "value", reason: "literal-text"}]);
+    assert.equal(payloadOf(result), '[\r\n "海😀", "[REDACTED]"\r\n]');
+});
+
+test("scalar evidence remains refused and already-redacted matches still describe replacement operations", () => {
+    assert.throws(() => create(recordFor('  "secret"'), {exactText: "secret"}), /object or array/);
+    const same = create(recordFor('{"token":"[REDACTED]"}'));
+    assert.equal(payloadOf(same), '{"token":"[REDACTED]"}'); assert.equal(same.review.total, 1);
+});
+
+test("zero-match review is empty without implying that untouched values are safe", () => {
+    const result = create(recordFor('{"unknown":"PRIVATE-UNRECOGNIZED"}'));
+    assert.deepEqual(result.review, {rows: [], total: 0, truncated: false});
+    assert.ok(result.text.includes("PRIVATE-UNRECOGNIZED")); assert.match(result.text, /Not an exhaustive secret detector/);
+});
+
+test("long review paths are explicitly shortened within 512 units without broken surrogate pairs", () => {
+    for (const key of ["x".repeat(507), "😀".repeat(300)]) {
+        const result = create(recordFor(JSON.stringify({[key]: {token: "hidden"}}))), row = result.review.rows[0];
+        assert.equal(row.shortened, true); assert.ok(row.path.length <= 512); assert.ok(row.path.endsWith("…"));
+        assert.ok(!/[\uD800-\uDBFF]…$/.test(row.path)); assert.equal(row.line, 1);
+    }
 });

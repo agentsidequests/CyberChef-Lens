@@ -295,6 +295,7 @@ export default function setupLensWorkspace() {
         section.innerHTML = '<h2 tabindex="-1">Review sharing copy</h2><p class="lw-sharing-origin"></p><p class="lw-sharing-count"></p>' +
             "<p>This is a modified sharing copy, not replayable evidence. Original input, recipes, coordinates, metadata, warnings and rule text are omitted. Original sources and evidence stay unchanged.</p>" +
             "<p>Review every field below. Rules can miss sensitive names, values and encoded content. A replacement count is not a privacy guarantee.</p>" +
+            '<details class="lw-redaction-review"><summary></summary><p class="lw-redaction-scope"></p><ol class="lw-redaction-list"></ol></details>' +
             '<label for="lw-sharing-payload">Payload in this sharing copy — complete</label><textarea id="lw-sharing-payload" readonly spellcheck="false"></textarea>' +
             '<p><a class="lw-share-download" download="CyberChef-Lens-sharing-copy.json">Download sharing copy</a></p>' +
             '<details><summary>Complete sharing JSON and manual copy</summary><label for="lw-sharing-json">Complete sharing JSON</label><textarea id="lw-sharing-json" readonly spellcheck="false"></textarea>' +
@@ -303,6 +304,22 @@ export default function setupLensWorkspace() {
         section.querySelector(".lw-sharing-count").textContent = result.counts.total ?
             `${result.counts.values} value/subtree replacements · ${result.counts.keys} key replacements · ${result.payloadBytes} modified-payload bytes.` :
             "No values or keys matched these rules. The payload still contains all its original values. Review it or add rules before sharing.";
+        const review = section.querySelector(".lw-redaction-review"), list = section.querySelector(".lw-redaction-list");
+        review.open = result.review.total <= 8;
+        review.querySelector("summary").textContent = `Replacements by field (${result.review.total})`;
+        section.querySelector(".lw-redaction-scope").textContent =
+            (result.review.truncated ? `Showing the first ${result.review.rows.length} of ${result.review.total} replacements. ` :
+                result.review.total ? "Every replacement is listed. " : "No replacements to list. ") +
+            "Paths use keys in the sharing copy; locations refer to the original payload. #2 means the second member with that name; array indexes start at 0. This local review is excluded from the download.";
+        for (const row of result.review.rows) {
+            const item = document.createElement("li"), path = document.createElement("code"), location = document.createElement("span"), change = document.createElement("span");
+            path.textContent = row.path;
+            location.className = "lw-redaction-location";
+            location.textContent = `Original payload: line ${row.line}, column ${row.column}.${row.shortened ? " Path shortened; use the location to distinguish this replacement." : ""}`;
+            change.className = "lw-redaction-change";
+            change.textContent = `${{value: "Value replaced", subtree: "Whole subtree replaced", key: "Key renamed"}[row.action]} · ${row.reason === "member-name" ? "Member-name rule" : "Literal-text rule"}`;
+            item.append(path, location, change); list.appendChild(item);
+        }
         section.querySelector(".lw-share-download").href = "data:application/json;charset=utf-8," + encodeURIComponent(result.text);
         section.querySelector("#lw-sharing-payload").value = JSON.parse(result.text).payload.text;
         section.querySelector("#lw-sharing-json").value = result.text;
