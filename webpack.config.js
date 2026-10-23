@@ -144,6 +144,15 @@ module.exports = {
         noParse: /argon2\.wasm$/,
         rules: [
             {
+                // Image operations also run in workers, where a DOM script
+                // loader is unavailable. Keep Jimp's parser in the image module;
+                // the image module itself is still loaded only when needed.
+                test: /[\\/]node_modules[\\/]@jimp[\\/]core[\\/]dist[\\/]esm[\\/]index\.js$/,
+                parser: {
+                    dynamicImportMode: "eager"
+                }
+            },
+            {
                 test: /\.m?js$/,
                 exclude: /node_modules[\\/](?!crypto-api|bootstrap)/,
                 options: {

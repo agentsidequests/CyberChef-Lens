@@ -319,7 +319,9 @@ upgrade or claim that all inherited risks are resolved is made.
   [advisory](https://github.com/advisories/GHSA-5v7r-6r5c-r473).
   The published browser entry is an empty stub, so this fork's bundler selects
   the package's published ESM implementation while retaining transitive browser
-  conditions. A bundled behavior regression covers decoding, resizing and
+  conditions. Jimp's parser import is kept inside the image module so worker
+  decoding does not require a DOM script loader; the image module remains lazy.
+  A bundled behavior regression without a DOM covers decoding, resizing and
   malformed ASF refusal; a successful Node import alone is insufficient.
 - Node-forge remains version 1.4.0, with no released patched version listed at
   review. This fork backports the nested DigestAlgorithm element-count guard

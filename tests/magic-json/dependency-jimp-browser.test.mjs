@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import {spawnSync} from "node:child_process";
 import {fileURLToPath} from "node:url";
 
-test("browser-bundled Jimp decodes, resizes and rejects malformed ASF", () => {
+test("browser-bundled Jimp decodes, resizes and refuses malformed ASF without a DOM", () => {
     const root = fileURLToPath(new URL("../../", import.meta.url));
     const code = `
         import assert from "node:assert/strict";
@@ -13,6 +13,7 @@ test("browser-bundled Jimp decodes, resizes and rejects malformed ASF", () => {
         import {createRequire} from "node:module";
         import webpack from "webpack";
         const root = process.cwd(), require = createRequire(join(root, "package.json"));
+        assert.equal(typeof document, "undefined");
         const base = require("./webpack.config.js"), prefix = join(tmpdir(), "cyberchef-jimp-browser-");
         const folder = mkdtempSync(prefix), entry = join(folder, "entry.mjs");
         try {
@@ -25,11 +26,12 @@ test("browser-bundled Jimp decodes, resizes and rejects malformed ASF", () => {
                 'let rejected=0; for(const size of [0,1,23,24]) {const bytes=Buffer.alloc(55); Buffer.from("3026b2758e66cf11a6d9","hex").copy(bytes); bytes.writeBigUInt64LE(BigInt(size),46); try {await Jimp.read(bytes);} catch(e) {if (!/mime|type|format/i.test(e.message)) throw e; rejected++;}}' +
                 'return {width:restored.width,height:restored.height,pixel:restored.getPixelColor(0,0),rejected};}');
             const compiler = webpack({mode:"development",target:"web",devtool:false,entry,
-                output:{path:folder,filename:"bundle.cjs",library:{type:"commonjs2"},publicPath:""},
+                output:{path:folder,filename:"bundle.cjs",library:{type:"commonjs2"},publicPath:"",globalObject:"globalThis"},
                 resolve:{...base.resolve,modules:[join(root,"node_modules"),"node_modules"]},
+                module:{rules:base.module.rules.filter(rule => rule.parser)},
                 optimization:{minimize:false},
                 plugins:[new webpack.ProvidePlugin({Buffer:["buffer","Buffer"],process:"process"}),
-                    new webpack.DefinePlugin({"process.browser":"true"}),new webpack.optimize.LimitChunkCountPlugin({maxChunks:1})]});
+                    new webpack.DefinePlugin({"process.browser":"true"})]});
             const stats = await new Promise((done, fail) => compiler.run((error,result) => error ? fail(error) : done(result)));
             await new Promise((done,fail) => compiler.close(error => error ? fail(error) : done()));
             assert.equal(stats.hasErrors(),false,stats.toString({all:false,errors:true}));
