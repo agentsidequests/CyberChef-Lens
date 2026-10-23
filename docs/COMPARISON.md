@@ -145,5 +145,10 @@ tokens need not be JWTs and do not earn a new JSON-payload action. See the
 A repeat of the older challenge hit the 30-second process limit twice on native
 search for the bare RFC 7515 HMAC input, before this profile was added. Its
 focused wrapper, trail and manual extraction checks completed. The earlier
-native-search result above is historical; this repeat did not freshly requalify
-that row. This remains an open native-search check, not a Bearer-profile pass.
+native-search result above is historical; that repeat did not freshly requalify
+the row. A later isolated run of the same unmodified worker completed at depths
+3 and 5 and retained the historical outputs and manual witness. Present phase
+tracing records milliseconds in native search and most runtime in preparation,
+but the cause of the two earlier untraced whole-worker timeouts is unknown.
+This is a supplemental requalification, not a new single-run fourteen-row batch
+or evidence that Lens fixed a native-search defect.

@@ -68,6 +68,9 @@ Available now:
 - **Parsing cautions:** locate repeated member names and selected JavaScript
   numeric range problems before passing a decoded document to another tool.
   Original fields and number spellings stay intact; no value is silently chosen.
+- **Save this result:** download the exact decoded JSON, or keep a portable
+  evidence JSON with its input, replay recipes, warnings and search status.
+  Downloads are explicit and unredacted; review them before sharing.
 - Replays native candidate recipes on complete input and checks strict UTF-8 and
   whole-document JSON, instead of accepting a valid-looking prefix.
 - Retains competing exact texts and recipe provenance. A syntax match does not
@@ -185,10 +188,33 @@ remain outside this profile. General-purpose **Any** is unchanged.
 ## Roadmap
 
 The experimental JSON investigation, multi-layer payload trail and lossless JSON
-inspection are available with portable tests and a source build. Clean-install
-CI still needs a completed remote run. Broader encoding coverage and stronger
-resource isolation need their
-own evidence before they are advertised; no delivery date is promised.
+inspection are available with portable tests and a source build. The preceding
+Bearer-field checkpoint passed an isolated Windows clean-install rehearsal with
+fresh locked dependencies. Actual remote Ubuntu CI still needs a completed run.
+Broader encoding coverage and stronger resource isolation need their own evidence
+before they are advertised; no delivery date is promised.
+
+## Take an investigation with you
+
+Open **Save this result** on a JSON result card. **Download exact JSON** saves
+the complete decoded text, including its whitespace and repeated members.
+**Download evidence JSON** adds the unredacted input to that Magic step, all
+retained recipes for that result, warnings, bounded parsing-caution findings and
+the recorded search status. The payload stays a string inside the evidence file,
+so a JSON reader cannot silently round its numbers or discard repeated members.
+
+Replay a saved route against the saved `input.text`. These are the operations
+that replaced Magic, not any operations before or after it. If Magic followed
+another decoder, the saved input is the output of that decoder—not necessarily
+what was originally pasted into CyberChef's Input pane.
+
+The file does not include other results, authenticate the message or establish
+chain of custody. It is ordinary editable JSON and may contain live credentials.
+There is no redaction, automatic download, import feature or new network call.
+The total generated download text is capped at 2 MiB per presentation. If the
+complete snapshot exceeds the budget, has more than 64 retained routes or lacks
+exact UTF-8 input, Lens refuses that download rather than quietly shortening it.
+The checked results and normal native recipe actions remain available.
 
 ## Run from source
 

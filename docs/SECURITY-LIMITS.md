@@ -5,6 +5,18 @@ decoded payload to grant access, trust an issuer or accept a signature. Avoid
 entering live credentials, personal records or production cookies during review;
 use fictional data when reporting a problem.
 
+**Saved result files are unredacted.** The explicit exact-JSON download contains
+the complete selected decoded text. The evidence-JSON download also contains
+the exact UTF-8 input to this Magic step, its retained replay recipes, warnings
+and bounded parsing-caution findings. Input, payload and recipe arguments may
+contain secrets. Review before sharing; no redaction or automatic download is
+performed. The editable snapshot is not signed, tamper-evident or a chain-of-
+custody record, and contains no other retained results. Replay uses its saved
+Magic-step input, not necessarily the top-level Input or surrounding operations.
+Exported text is limited to 2 MiB across the presentation. An evidence snapshot
+with missing exact input, more than 64 retained routes or excessive size is
+refused rather than truncated. Existing native output-saving remains available.
+
 The JSON goal checks complete UTF-8 JSON objects/arrays within the candidates it
 actually considers. It does not establish intended encoding, meaning, schema,
 producer identity or general absence of duplicate payload keys. Duplicate-key

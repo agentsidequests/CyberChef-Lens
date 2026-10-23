@@ -13,6 +13,13 @@ signatures are fabricated. Do not use it as an authentication or exploit test.
 4. Open **Follow the decoding trail** to inspect the paired Cookie and compact
    token. Choose **Load full JSON recipe** to replay from the unchanged input.
 
+Before loading the recipe, you can open **Save this result**. **Download exact
+JSON** matches the reference payload byte for byte. **Download evidence JSON**
+also keeps the unredacted Magic-step input, replay recipes, cautions and recorded
+search status. The payload is stored as a string, not parsed account/role values.
+These fictional files are safe training material; real input may contain live
+credentials. Review any saved result before sharing it.
+
 The three logical layers are Base64 → paired Cookie → compact token → JSON.
 The final `lens-investigation-payload.txt` is the exact 100-byte reference,
 including its final LF. The input file also ends in LF; do not delete characters

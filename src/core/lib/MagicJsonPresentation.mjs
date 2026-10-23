@@ -6,6 +6,7 @@
 import Utils from "../Utils.mjs";
 import {compareJsonTexts} from "./JsonText.mjs";
 import {presentJsonHazards} from "./JsonHazardPresentation.mjs";
+import {createJsonEvidence, JSON_EXPORT_BYTES} from "./MagicJsonExport.mjs";
 
 const escape = value => Utils.escapeHtml(String(value));
 const routine = note => /^(One checksummed zlib layer only;|Explicit zip:DEF profile:)/.test(note);
@@ -79,6 +80,26 @@ function preview(text) {
         (view.shortened ? '<p class="mj-meta">Preview shortened. Load a recipe for the complete checked output.</p>' : "") +
         "<details><summary>Exact text preview — original formatting</summary>" + pre(view.exact, "Exact text preview") +
         (view.shortened ? '<p class="mj-meta">This exact-text preview is also shortened.</p>' : "") + "</details>";
+}
+
+/** Explicit local downloads; never silently redact, truncate or replace evidence. */
+function downloads(group, index, count, report, mode, budget) {
+    const link = (text, suffix, label) => {
+        const bytes = new TextEncoder().encode(text).length;
+        if (bytes > budget.remaining) return `<p class="mj-meta">${escape(label)} unavailable: the 2 MiB total download-text budget was reached. No partial file is offered.</p>`;
+        budget.remaining -= bytes;
+        return `<p><a href="${escape("data:application/json;charset=utf-8," + encodeURIComponent(text))}" download="lens-result-${index + 1}-${suffix}.json">${escape(label)}</a></p>`;
+    };
+    let output = '<details class="mj-export"><summary>Save this result</summary>' +
+        '<p class="mj-meta">Exact JSON saves only the complete decoded text, with no reformatting. Evidence JSON also includes the <strong>unredacted input to this Magic step</strong>, replay recipes, warnings and search status. Either file may contain secrets. Review before sharing.</p>' +
+        link(group.text, "payload", "Download exact JSON");
+    try {
+        output += link(createJsonEvidence(group, {report, mode, index, count}), "evidence", "Download evidence JSON");
+    } catch (error) {
+        if (!(error instanceof RangeError)) throw error;
+        output += `<p class="mj-meta">Evidence download unavailable: ${escape(error.message)}</p>`;
+    }
+    return output + '<p class="mj-meta">Evidence replay starts from the saved Magic-step input, not necessarily the top-level Input. Surrounding operations are not included. The file is editable, not an authenticity or chain-of-custody proof. Other retained results are not included.</p></details>';
 }
 
 /** Name the action for the evidence role, not merely valid syntax. */
@@ -156,7 +177,7 @@ export function presentJsonComparison(groups, layered=false) {
 }
 
 /** Put a reproducible action above its evidence preview. */
-function resultCard(group, index, count, context) {
+function resultCard(group, index, count, context, report, mode, budget) {
     // Prefer the bounded payload replay for the action, not an unbounded native alternative.
     const source = preferredSource(group);
     const role = group.role || "JSON result";
@@ -167,7 +188,7 @@ function resultCard(group, index, count, context) {
         presentJsonHazards(group.text) +
         '<div class="mj-actions">' + `<a class="mj-action" href="${context.recipeUrl(source.recipe)}">${actionLabel(source, role)}</a>` +
         '<span class="mj-action-note">Replaces Magic. Input stays unchanged.</span></div></div><div class="mj-body">' +
-        preview(group.text) +
+        preview(group.text) + downloads(group, index, count, report, mode, budget) +
         "<details><summary>How this was decoded" + (group.sources.length > 1 ? ` · ${group.sources.length} recipe routes` : "") + "</summary>" +
         sourceDetail(source, context, role) + group.sources.filter(item => item !== source).slice(0, 15).map(item => sourceDetail(item, context, role, true)).join("") +
         (group.sources.length > 16 ? `<p class="mj-meta">Showing 16 of ${group.sources.length} routes.</p>` : "") +
@@ -203,6 +224,7 @@ function scopeNotes(notes) {
 /** Grouped native and wrapper evidence; no interpretation is selected for the user. */
 export function presentJsonInvestigation(report, context) {
     const count = report.outputs.length;
+    const budget = {remaining: JSON_EXPORT_BYTES};
     const title = !count && report.status !== "complete" ? "No checked result yet. The search did not finish." :
         count > 1 ? `${count} different JSON outputs survived. Compare before choosing.` :
             count ? "One JSON output found. Inspect it before use." : "No JSON object or array found in these candidate pools.";
@@ -216,7 +238,7 @@ export function presentJsonInvestigation(report, context) {
     const attached = new Set(count === 1 ? report.outputs[0].interpretationWarnings || [] : []);
     output += warnings((report.interpretationWarnings || []).filter(note => !attached.has(note)));
     output += presentJsonComparison(report.outputs);
-    output += report.outputs.slice(0, 32).map((group, index) => resultCard(group, index, count, context)).join("");
+    output += report.outputs.slice(0, 32).map((group, index) => resultCard(group, index, count, context, report, "JSON object or array", budget)).join("");
     if (count > 32) output += `<p>Showing 32 of ${count} different checked outputs.</p>`;
     if (!count) output += "<p>Try another decoder, or return to Any for the original general-purpose search. In this combined mode, a crib can exclude otherwise valid JSON.</p>";
     output += '<p class="mj-meta">Recipe links replace only Magic; surrounding steps and input stay unchanged.</p>' +
@@ -236,6 +258,7 @@ export function presentJsonInvestigation(report, context) {
 /** Focused wrappers retain fields and refusals without implying authentication. */
 export function presentJsonWrappers(report, context) {
     const accepted = report.candidates.filter(candidate => candidate.accepted);
+    const budget = {remaining: JSON_EXPORT_BYTES};
     let output = '<section class="magic-json" data-magic-wrapper-report="true">' + styles + "<h2>Look inside the wrapper</h2>" +
         `<p class="mj-status">${accepted.length ? `${accepted.length} checked JSON field${accepted.length === 1 ? "" : "s"}. Inspect the role before use.` :
             "No supported JSON wrapper confirmed by these checks."}</p>` +
@@ -250,7 +273,7 @@ export function presentJsonWrappers(report, context) {
         byteLength: candidate.evidence.byteLength ?? new TextEncoder().encode(candidate.evidence.text).byteLength,
         interpretationWarnings: candidate.interpretationWarnings,
         sources: [{...candidate, route: "wrapper"}],
-    }, index, accepted.length, context);
+    }, index, accepted.length, context, report, "JSON wrappers", budget);
     const rejected = report.candidates.filter(candidate => !candidate.accepted);
     if (rejected.length) output += "<details><summary>Other examined interpretations (not confirmed)</summary>" + rejected.map(candidate =>
         `<div class="mj-source"><h3>Possible ${escape(candidate.kind)}</h3><p>Not confirmed: ${escape(candidate.evidence.status)}` +
@@ -278,6 +301,7 @@ function trailSteps(source, report, context) {
 /** A bounded decoding trail, not a confidence score or authentication verdict. */
 export function presentPayloadTrail(report, context) {
     const count = report.outputs.length;
+    const budget = {remaining: JSON_EXPORT_BYTES};
     const title = count ? `${count} JSON layer${count === 1 ? "" : "s"} found. Each recipe starts from your original input.` :
         "No JSON object or array reached through these profiles.";
     let output = '<section class="magic-json" data-magic-trail-report="true">' + styles +
@@ -296,8 +320,8 @@ export function presentPayloadTrail(report, context) {
             presentJsonHazards(group.text) +
             '<div class="mj-actions">' + `<a class="mj-action" href="${context.recipeUrl(source.recipe)}">${source.depth ? "Load full JSON recipe" : "Keep original JSON"}</a>` +
             '<span class="mj-action-note">Replaces Magic. Input stays unchanged.</span></div></div><div class="mj-body">' +
-            preview(group.text) + "<details><summary>Follow the decoding trail" +
-            (source.depth ? ` · ${source.depth} layers` : "") + "</summary>" + trailSteps(source, report, context) + "</details>" +
+            preview(group.text) + downloads(group, index, count, report, "JSON payload trail", budget) + "<details><summary>Follow the decoding trail" +
+            (source.depth ? ` · ${source.depth} ${source.depth === 1 ? "layer" : "layers"}` : "") + "</summary>" + trailSteps(source, report, context) + "</details>" +
             "<details><summary>Full recipe and arguments</summary>" + chain(source.recipe) +
             pre(Utils.generatePrettyRecipe(source.recipe, true) || "Original input (no decoding)", "Full recipe and arguments") + "</details>";
         if (group.sources.length > 1) output += "<details><summary>Other recipes for this exact text</summary>" +
