@@ -107,4 +107,14 @@ TestRegister.addTests([
             }
         ]
     },
+    ...["a", "😀"].flatMap(character => [999, 1000].map(length => {
+        const reference = `[${character.repeat(length)}]: /path`;
+        return {
+            name: `Render Markdown: ${length} ${character === "a" ? "ASCII" : "supplementary"} reference code points`,
+            input: reference + "\n",
+            expectedOutput: '<div style="font-family: var(--primary-font-family)">' +
+                (length === 999 ? "" : `<p>${reference}</p>\n`) + "</div>",
+            recipeConfig: [{op: "Render Markdown", args: [false, false, false]}]
+        };
+    }))
 ]);

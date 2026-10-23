@@ -203,21 +203,25 @@ or removal records, never the comparison conclusion or total counts. Malformed
 or oversized input is an error, not equality. These bounds are not a hard process
 sandbox or a cross-browser performance guarantee. Existing Diff modes remain.
 
-## Inherited dependency advisories — reviewed October 22, 2026
+## Dependency advisories — reviewed October 23, 2026
 
-The production lockfile audit reports 26 affected package entries: 1 critical,
-2 high, 19 moderate and 4 low. These are package counts, not independent flaws.
-They are inherited unchanged from the pinned upstream baseline. This fork has
-not run a broad dependency upgrade or claimed that inherited risks are resolved.
+After two targeted lockfile patches, the production lockfile audit reports
+24 affected package entries: 0 critical, 1 high, 19 moderate and 4 low. These are
+package counts, not independent flaws or verified exploits. The remaining
+entries are inherited from the pinned upstream baseline. No broad dependency
+upgrade or claim that all inherited risks are resolved is made.
 
-- DOMPurify 3.4.16 has a critical-rated advisory involving `SAFE_FOR_TEMPLATES`
-  with DOM-returning modes/shadow roots. The inspected caller uses ordinary
-  string sanitization; exploitability of that nondefault configuration was not
-  established here. The advisory metadata lists 3.4.17 as patched.
+- DOMPurify is locked to 3.4.17, the patched version for the critical-rated
+  `SAFE_FOR_TEMPLATES` advisory involving DOM-returning modes/shadow roots.
+  Split shadow-root template regressions fail on 3.4.16 and pass on 3.4.17.
+  The inspected application caller uses ordinary string sanitization;
+  exploitability of that nondefault configuration in this app was not established.
   [Advisory](https://github.com/advisories/GHSA-cg2g-xh64-v4q7).
-- Markdown-it 14.3.2 has denial-of-service advisories. HTML rendering is disabled
-  here, but a separate default-options reference-parsing case remains relevant
-  to review. The records list 14.3.3 as a patched 14.x version.
+- Markdown-it is locked to 14.3.3 for its denial-of-service advisories. HTML
+  rendering remains disabled; the separate default-options reference-parsing
+  case was relevant to the existing caller. Reference labels now obey the
+  999-Unicode-codepoint limit; overlong definitions remain literal text.
+  Boundary regressions and the native Render Markdown fixtures pass.
   [HTML-specific](https://github.com/advisories/GHSA-vfgh-jcmw-g37q),
   [default options](https://github.com/advisories/GHSA-gfr2-rv44-r23c).
 - Node-forge 1.4.0 has an RSA signature-verification advisory with no patched
@@ -225,9 +229,10 @@ not run a broad dependency upgrade or claimed that inherited risks are resolved.
   does not dispose of the risk in unrelated inherited operations.
   [Advisory](https://github.com/advisories/GHSA-86w9-cpqp-85rv).
 
-The added Pako 3.0.2 alias was not listed in that audit. Absence from an advisory
-list is not a security guarantee. Its published code is unmodified and its MIT
-AND Zlib notices are retained in the root third-party notices file.
+DOMPurify, Markdown-it and the added Pako 3.0.2 alias were not listed in the
+patched audit. Absence from an advisory list is not a security guarantee.
+Pako's published code is unmodified and its MIT AND Zlib notices are retained
+in the root third-party notices file.
 
 This candidate does not claim an exhaustive security review, a complete browser
 matrix, a hard sandbox, a fresh-install pass on every platform or production
