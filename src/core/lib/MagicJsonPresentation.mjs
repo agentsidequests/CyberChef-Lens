@@ -86,15 +86,20 @@ function preview(text) {
 function downloads(group, index, count, report, mode, budget) {
     const link = (text, suffix, label) => {
         const bytes = new TextEncoder().encode(text).length;
-        if (bytes > budget.remaining) return `<p class="mj-meta">${escape(label)} unavailable: the 2 MiB total download-text budget was reached. No partial file is offered.</p>`;
+        if (bytes > budget.remaining) return {available: false, html: `<p class="mj-meta">${escape(label)} unavailable: the 2 MiB total download-text budget was reached. No partial file is offered.</p>`};
         budget.remaining -= bytes;
-        return `<p><a href="${escape("data:application/json;charset=utf-8," + encodeURIComponent(text))}" download="lens-result-${index + 1}-${suffix}.json">${escape(label)}</a></p>`;
+        return {available: true, html: `<p><a href="${escape("data:application/json;charset=utf-8," + encodeURIComponent(text))}" download="lens-result-${index + 1}-${suffix}.json">${escape(label)}</a></p>`};
     };
     let output = '<details class="mj-export"><summary>Save this result</summary>' +
         '<p class="mj-meta">Exact JSON saves only the complete decoded text, with no reformatting. Evidence JSON also includes the <strong>unredacted input to this Magic step</strong>, replay recipes, warnings and search status. Either file may contain secrets. Review before sharing.</p>' +
-        link(group.text, "payload", "Download exact JSON");
+        link(group.text, "payload", "Download exact JSON").html;
     try {
-        output += link(createJsonEvidence(group, {report, mode, index, count}), "evidence", "Download evidence JSON");
+        const evidence = createJsonEvidence(group, {report, mode, index, count});
+        const file = link(evidence, "evidence", "Download evidence JSON");
+        output += file.html;
+        if (file.available) output += "<details><summary>View complete evidence JSON</summary>" +
+            '<p class="mj-meta">If your browser does not start the download, select and copy this complete text into a UTF-8 JSON file. It is the same unredacted record, not a preview.</p>' +
+            pre(evidence, "Complete evidence JSON") + "</details>";
     } catch (error) {
         if (!(error instanceof RangeError)) throw error;
         output += `<p class="mj-meta">Evidence download unavailable: ${escape(error.message)}</p>`;

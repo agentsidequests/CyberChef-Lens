@@ -40,7 +40,10 @@ for (const item of examples) test(`${item.id} yields exact native extraction in 
             assert.equal(candidate.compatibility.status, "incompatible");
             assert.ok(candidate.compatibility.reasons.includes("padded-fields"));
             assert.doesNotMatch(candidate.kind, /^JWT-shaped/);
-            assert.equal((html.match(/Padded Base64url fields are inspectable data/g) || []).length, 1);
+            // The record also retains this warning in its copyable evidence text.
+            // Count the actionable card header, not the separately disclosed record.
+            const cardHead = /<div class="mj-head">([\s\S]*?)<\/div><div class="mj-body">/.exec(html)[1];
+            assert.equal((cardHead.match(/Padded Base64url fields are inspectable data/g) || []).length, 1);
         } else {
             assert.match(candidate.resultRole, /unsigned/i);
             assert.match(candidate.interpretationWarnings.join(" "), /no signature|unsigned/i);

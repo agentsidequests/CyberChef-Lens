@@ -43,6 +43,10 @@ for (const goal of ["JSON wrappers", "JSON payload trail", "JSON object or array
         const snapshot = JSON.parse(files.find(file => file.name.endsWith("-evidence.json")).text);
         assert.equal(snapshot.format, "cyberchef-lens-evidence");
         assert.equal(snapshot.formatVersion, 1);
+        const displayed = html.match(/<pre tabindex="0" aria-label="Complete evidence JSON">([\s\S]*?)<\/pre>/);
+        assert.ok(displayed);
+        assert.deepEqual(JSON.parse(Utils.unescapeHtml(displayed[1])), snapshot);
+        assert.match(html, /same unredacted record, not a preview/);
         assert.equal(snapshot.input.text, input);
         assert.match(snapshot.input.scope, /this Magic step/);
         assert.equal(snapshot.result.text, payload);
@@ -106,6 +110,7 @@ test("unavailable exact input refuses evidence, not the payload or existing reci
     assert.equal(files.length, 1);
     assert.equal(files[0].text, "{}");
     assert.match(html, /Evidence download unavailable/);
+    assert.doesNotMatch(html, /View complete evidence JSON/);
     assert.match(html, /Keep original JSON/);
 });
 

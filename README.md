@@ -202,6 +202,8 @@ the complete decoded text, including its whitespace and repeated members.
 retained recipes for that result, warnings, bounded parsing-caution findings and
 the recorded search status. The payload stays a string inside the evidence file,
 so a JSON reader cannot silently round its numbers or discard repeated members.
+If a browser cannot start downloads, **View complete evidence JSON** exposes the
+same complete record for manual copying, not a shortened preview.
 
 Replay a saved route against the saved `input.text`. These are the operations
 that replaced Magic, not any operations before or after it. If Magic followed

@@ -16,6 +16,8 @@ Magic-step input, not necessarily the top-level Input or surrounding operations.
 Exported text is limited to 2 MiB across the presentation. An evidence snapshot
 with missing exact input, more than 64 retained routes or excessive size is
 refused rather than truncated. Existing native output-saving remains available.
+The complete evidence-text view has the same privacy boundary and export budget;
+it provides manual copying when a browser's download path is unavailable.
 
 The JSON goal checks complete UTF-8 JSON objects/arrays within the candidates it
 actually considers. It does not establish intended encoding, meaning, schema,
