@@ -290,8 +290,8 @@ sandbox or a cross-browser performance guarantee. Existing Diff modes remain.
 
 ## Dependency advisories — reviewed October 23, 2026
 
-After two targeted lockfile patches, the production lockfile audit reports
-24 affected package entries: 0 critical, 1 high, 19 moderate and 4 low. These are
+After targeted dependency updates, the production lockfile audit reports
+34 affected package entries: 0 critical, 30 high, 0 moderate and 4 low. These are
 package counts, not independent flaws or verified exploits. The remaining
 entries are inherited from the pinned upstream baseline. No broad dependency
 upgrade or claim that all inherited risks are resolved is made.
@@ -309,6 +309,14 @@ upgrade or claim that all inherited risks are resolved is made.
   Boundary regressions and the native Render Markdown fixtures pass.
   [HTML-specific](https://github.com/advisories/GHSA-vfgh-jcmw-g37q),
   [default options](https://github.com/advisories/GHSA-gfr2-rv44-r23c).
+- Jimp is pinned to 1.6.1, using file-type 21.3.4. The official update removes
+  the inherited file-type ASF non-progress advisory from this dependency path.
+  A bounded child-process regression fails on the previous library and passes
+  on the update, with valid PNG decoding as a control. The synthetic malformed
+  ASF input was already refused by the application's image-signature check;
+  this is library hardening, not a reproduced browser-operation hang.
+  [Jimp release](https://github.com/jimp-dev/jimp/releases/tag/v1.6.1),
+  [advisory](https://github.com/advisories/GHSA-5v7r-6r5c-r473).
 - Node-forge remains version 1.4.0, with no released patched version listed at
   review. This fork backports the nested DigestAlgorithm element-count guard
   from [upstream candidate #1152](https://github.com/digitalbazaar/forge/pull/1152),
@@ -325,10 +333,25 @@ upgrade or claim that all inherited risks are resolved is made.
   [advisory](https://github.com/advisories/GHSA-86w9-cpqp-85rv).
   The JSON investigation modes do not verify signatures.
 
-DOMPurify, Markdown-it and the added Pako 3.0.2 alias were not listed in the
+The fresh audit includes the October 23 update to the
+[Zod collection-validation advisory](https://github.com/advisories/GHSA-mrhx-c7xc-m3w5),
+which now covers the inherited Zod 3.25.76 used by Jimp and propagates through
+29 package entries. Zod's version is unchanged by this update. Application
+exploitability has not been established; no forced major-version override is
+applied. Earlier audit snapshots without this entry are superseded.
+The four remaining low-rated entries follow the inherited elliptic dependency
+path; they were not upgraded in this change. DOMPurify, Markdown-it,
+file-type and the added Pako 3.0.2 alias were not listed in the
 patched audit. Absence from an advisory list is not a security guarantee.
 Pako's published code is unmodified and its MIT AND Zlib notices are retained
 in the root third-party notices file.
+
+Compatibility checks also reproduced an existing Node output-boundary issue:
+Resize Image and Convert Image Format return a Buffer's entire backing
+ArrayBuffer, which can include unrelated bytes when Node pools allocations.
+This occurs with both Jimp versions and is outside this dependency update.
+The browser image path is checked separately; passing dependency and fixture
+tests does not qualify these Node image outputs. A separate repair is required.
 
 This candidate does not claim an exhaustive security review, a complete browser
 matrix, a hard sandbox, a fresh-install pass on every platform or production
