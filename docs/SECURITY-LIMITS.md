@@ -16,6 +16,30 @@ timers are cooperative between work units. Module startup, native discovery and
 some existing operations remain outside those timers. This is not a hard CPU,
 memory or whole-process isolation boundary. Original Any behavior is unchanged.
 
+The separate JSON payload trail mode composes recognized layers. Default depth
+is 3, with an integer range of 0–5. It retains at most 16 distinct states and
+2 MiB of state bytes, performs at most 64 native replays (including guard/header
+checks), and limits each output to 1 MiB. A cooperative three-second exploration
+budget begins after module preparation. Original and expandable inputs are
+limited to 64 KiB; full recipes are limited to 32 native operations. The engine
+records depth ceilings, refusals and early budget stops. Earlier checked results
+can remain visible after an incomplete search; they do not prove exhaustion.
+
+Each retained state has at most four distinct recipe routes. Identical exact
+texts share a state, but outer containers and different payload texts remain
+separate. Intermediate compact-token transit refuses duplicate protected
+members, encryption, critical declarations, unsupported encoding overrides and
+inconsistent unsigned shapes. No arbitrary JSON-field harvesting or global
+rewriting of strings inside a valid JSON document is performed.
+
+Individual compressed steps use the bounded operations below. A trail may
+compose multiple recognized steps, but every expandable state must still meet
+the 64 KiB input limit. Buffers, module loading, native-operation workspace,
+recipe-prefix re-execution and final assembly consume resources beyond retained
+state bytes. Cancellation/time checks occur between native work units and are
+not a hard preemption guarantee. The browser's normal stop/restart behavior is
+separate from the engine's programmatic AbortSignal checks.
+
 The added inflation operations cap produced output, require complete consumption
 of one stream and never return a partial prefix after refusal. Checksummed zlib
 and raw DEFLATE are separate operations; raw DEFLATE has no checksum. Decoder

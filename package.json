@@ -2,7 +2,7 @@
   "name": "cyberchef",
   "version": "11.5.0",
   "private": true,
-  "description": "Unofficial CyberChef fork with goal-aware JSON recovery, replayable recipes and bounded decompression.",
+  "description": "Unofficial CyberChef fork with multi-layer JSON payload trails, replayable recipes and bounded decompression.",
   "author": "GCHQ <CyberChef@gchq.gov.uk>",
   "homepage": "https://github.com/agentsidequests/CyberChef-Lens",
   "copyright": "Crown copyright 2016",

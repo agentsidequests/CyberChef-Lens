@@ -45,3 +45,24 @@ Decoding a published SMART test payload does not establish issuer trust,
 revocation status, medical validity or signature verification. JSON arrays,
 numeric audience values and padded fields can be inspectable data without being
 valid JWT claims or canonical JOSE encoding.
+
+## Layer composition: selected constructed probes
+
+Before implementing JSON payload trail, four fictional nested cases were frozen:
+Base64 → Cookie → JSON envelope; percent-encoding → Base64 → compressed compact
+token; JSON envelope → compact token; and Cookie → compact token. The target text
+included a large numeric lexeme, Unicode and original whitespace.
+
+The pinned native Magic engine at depths 3 and 5 and the preceding JSON
+investigation did not recover the final target in any of the four cases. One
+returned the outer envelope, which is a different layer. Manual native recipes
+recovered all four exact targets. The new opt-in trail also recovered all four
+exact targets at depth 3, with full original-input recipes for the results and
+intermediate layers.
+
+These are same-case engineering checks on deliberately selected inputs, not
+blind holdouts, public incident samples or evidence of general superiority.
+They isolate automatic composition: the existing decoders already had the
+necessary capabilities. The portable tests also cover 25 transport/container
+combinations and guarded refusals; that matrix is a regression check, not a
+performance benchmark.

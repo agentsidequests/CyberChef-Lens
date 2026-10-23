@@ -246,8 +246,9 @@ export async function inspectJsonWrappers(input, replay, {prepare, ...budgets}={
                 }
             }
         }
-        candidate.accepted = candidate.evidence.status === "passed" &&
-            (!candidate.headerRecipe || candidate.headerEvidence.status === "passed") && !candidate.compressionRefusal && !candidate.variantRefusal;
+        candidate.extractionEligible = (!candidate.headerRecipe || candidate.headerEvidence.status === "passed") &&
+            !candidate.compressionRefusal && !candidate.variantRefusal;
+        candidate.accepted = candidate.evidence.status === "passed" && candidate.extractionEligible;
         annotateWrapperInterpretation(candidate);
         if (candidate.variantRefusal) {
             candidate.interpretationWarnings.push(candidate.variantRefusal);
@@ -270,6 +271,7 @@ export async function inspectJsonWrappers(input, replay, {prepare, ...budgets}={
         if (candidate.origin === "json-envelope") {
             const failure = carrierGuardFailure(candidate, evidence);
             if (failure) {
+                candidate.extractionEligible = false;
                 candidate.accepted = false;
                 candidate.interpretationWarnings.push(failure);
                 if (report.status === "complete") report.status = "unsupported";

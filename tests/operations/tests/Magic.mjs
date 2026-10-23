@@ -346,5 +346,37 @@ TestRegister.addTests([
         input: "a".repeat(65537),
         expectedOutput: "JSON wrapper investigation supports inputs up to 64 KiB.",
         recipeConfig: [{op: "Magic", args: [3, false, false, "", "JSON wrappers"]}]
+    },
+    {
+        name: "Magic payload trail: Base64 to unsigned compact token, with exact recipes",
+        input: "ZXlKaGJHY2lPaUp1YjI1bEluMC5leUpvWld4c2J5STZJQ0ozYjNKc1pDSjku",
+        expectedMatch: /Follow the payload[\s\S]+Layer 2[\s\S]+no authentication[\s\S]+Load full JSON recipe[\s\S]+hello[\s\S]+Load layer 1 recipe/,
+        recipeConfig: [{op: "Magic", args: [3, false, false, "[", "JSON payload trail"]}]
+    },
+    {
+        name: "Magic payload trail: valid JSON strings are not globally URL-decoded",
+        input: '{"note":"%41%42%43%44"}',
+        expectedMatch: /Original input · complete JSON[\s\S]+%41%42%43%44/,
+        unexpectedMatch: /ABCD/,
+        recipeConfig: [{op: "Magic", args: [3, false, false, "", "JSON payload trail"]}]
+    },
+    {
+        name: "Magic payload trail: depth ceiling is visible without a terminal action",
+        input: "ZXlKaGJHY2lPaUp1YjI1bEluMC5leUpvWld4c2J5STZJQ0ozYjNKc1pDSjku",
+        expectedMatch: /No JSON object or array[\s\S]+Depth ceiling reached \(1 layers\)/,
+        unexpectedMatch: /Load full JSON recipe/,
+        recipeConfig: [{op: "Magic", args: [1, false, false, "", "JSON payload trail"]}]
+    },
+    {
+        name: "Magic payload trail: input bound",
+        input: "a".repeat(65537),
+        expectedOutput: "JSON payload trails support inputs up to 64 KiB and an integer depth from 0 to 5.",
+        recipeConfig: [{op: "Magic", args: [3, false, false, "", "JSON payload trail"]}]
+    },
+    {
+        name: "Magic payload trail: conditional depth bound preserves original Magic range",
+        input: "{}",
+        expectedOutput: "JSON payload trails support inputs up to 64 KiB and an integer depth from 0 to 5.",
+        recipeConfig: [{op: "Magic", args: [6, false, false, "", "JSON payload trail"]}]
     }
 ]);

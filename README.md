@@ -1,11 +1,11 @@
 # CyberChef Lens
 
-**Give Magic a target. Keep the recipe.**
+**Follow the layers. Keep the recipe.**
 
-An unofficial CyberChef fork for investigating encoded data. Its first addition
-is a JSON goal for Magic: find a **complete object or array**, inspect competing
-results, and load the actual decoding steps into your recipe. Supported token
-and session wrappers can yield their payloads without manual field extraction.
+An unofficial CyberChef fork for investigating encoded data. Give Magic a JSON
+goal, or follow a payload through several encoding and container layers. Inspect
+what each step produced, then load the complete decoding recipe. The original
+input stays put.
 
 The JSON investigation runs locally; it does not call a model or external
 service. Original operations remain available, and **Any** keeps general-purpose
@@ -46,6 +46,9 @@ and a working recipe—not a new decoding algorithm.
 
 Available now:
 
+- **JSON payload trail:** compose recognized transport and container layers,
+  inspect intermediate text, and load a complete recipe for any reached layer.
+  Different JSON layers remain separate; deeper is not more trustworthy.
 - Replays native candidate recipes on complete input and checks strict UTF-8 and
   whole-document JSON, instead of accepting a valid-looking prefix.
 - Retains competing exact texts and recipe provenance. A syntax match does not
@@ -62,12 +65,34 @@ recipes recovered all eight. This was a small selected set, including repairs
 on known misses—not a blind benchmark or a general accuracy claim. See
 [comparison scope and sources](docs/COMPARISON.md).
 
+## One investigation, several layers
+
+Paste this fictional two-layer example into Input, add **Magic**, and choose
+**Output goal → JSON payload trail**:
+
+```text
+ZXlKaGJHY2lPaUp1YjI1bEluMC5leUpvWld4c2J5STZJQ0ozYjNKc1pDSjku
+```
+
+The trail follows **Base64 → unsigned compact token → JSON**. Open **Follow the
+decoding trail** to inspect the token between the two steps, or click **Load full
+JSON recipe** to work directly with `{"hello": "world"}`. Every offered layer
+recipe was replayed against the complete original input. The token is unsigned;
+the decoded text is not authenticated.
+
+This mode follows a finite set of Base64, hexadecimal, percent-encoding and
+guarded container profiles. It does not rewrite arbitrary encoded-looking
+strings inside an existing JSON document. Depth means logical layers, from
+0 to 5; other Magic search settings do not apply. State, replay, byte and
+cooperative-time limits are explicit in the result. It is not an exhaustive
+search or a hard resource sandbox.
+
 ## Roadmap
 
-The first milestone is the experimental JSON investigation, its portable tests
-and a reproducible source build. Clean-install CI still needs a completed remote
-run. The next larger investigation feature has not been selected; no additional
-analyzer is being advertised as available or promised for a particular date.
+The experimental JSON investigation and multi-layer payload trail are available
+with portable tests and a source build. Clean-install CI still needs a completed
+remote run. Broader encoding coverage and stronger resource isolation need their
+own evidence before they are advertised; no delivery date is promised.
 
 ## Run from source
 
@@ -88,7 +113,8 @@ hooks, download a browser, configure a global package or publish anything.
 The built application is in `build/prod/index.html`; the same directory contains
 a standalone ZIP with its licenses. Serve the directory locally to exercise the
 production bundle. Add **Magic**, leave depth at **3**, and choose **Output goal →
-JSON object or array**. The smaller **JSON wrappers** mode skips generic search.
+JSON object or array**. **JSON wrappers** checks a single container; **JSON payload
+trail** follows recognized layers without running generic search.
 
 The check-only workflow runs native tests, portable feature tests and the build.
 It has read-only repository permission and no deployment or publication steps.

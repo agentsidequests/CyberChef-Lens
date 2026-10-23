@@ -218,3 +218,61 @@ export function presentJsonWrappers(report, context) {
         "At most three native recipes are replayed against the complete input. Native decoder loading happens before the cooperative two-second evidence budget; it is not a wall-clock guarantee.</p>" +
         scopeNotes(report.interpretationWarnings) + "</details></section>";
 }
+
+/** Give every intermediate action its own complete original-input witness. */
+function trailSteps(source, report, context) {
+    return source.hops.length ? "<ol>" + source.hops.map((hop, index) => {
+        const node = report.nodes[hop.nodeId];
+        return `<li><p><strong>Layer ${index + 1} · ${escape(hop.kind)}</strong><br>` +
+            `<span class="mj-meta">${hop.inputBytes} → ${hop.outputBytes} bytes</span></p>` +
+            `<p><a href="${context.recipeUrl(hop.recipe)}">Load layer ${index + 1} recipe</a></p>` +
+            (node ? pre(node.text.slice(0, 1024), `Layer ${index + 1} exact text preview`) +
+                (node.text.length > 1024 ? '<p class="mj-meta">Preview shortened. The recipe produces the complete layer.</p>' : "") : "") + "</li>";
+    }).join("") + "</ol>" : "<p>The original input is already a complete JSON object or array.</p>";
+}
+
+/** A bounded decoding trail, not a confidence score or authentication verdict. */
+export function presentPayloadTrail(report, context) {
+    const count = report.outputs.length;
+    const title = count ? `${count} JSON layer${count === 1 ? "" : "s"} found. Each recipe starts from your original input.` :
+        "No JSON object or array reached through these profiles.";
+    let output = '<section class="magic-json" data-magic-trail-report="true">' + styles +
+        "<h2>Follow the payload</h2>" + `<p class="mj-status">${escape(title)}</p>` +
+        '<p class="mj-trust"><strong>Decoded, not verified.</strong> A deeper layer is not a more trustworthy one. Signatures and claims remain unverified.</p>';
+    if (report.status !== "complete") output += '<div class="mj-warning" role="note"><strong>Search stopped early.</strong> ' +
+        `Reason: ${escape(report.reason || report.status)}. Any results below were checked before the stop; the search is incomplete.</div>`;
+    if (report.depthLimited) output += `<p class="mj-meta">Depth ceiling reached (${report.limits.maxDepth} layers). Further layers were not examined.</p>`;
+    for (const group of report.outputs) {
+        const source = group.sources[0];
+        output += '<article class="mj-card"><div class="mj-head">' +
+            `<h3>${source.depth ? `Layer ${source.depth} · JSON reached via ${escape(source.kind)}` : "Original input · complete JSON"}</h3>` +
+            `<p class="mj-meta">${group.byteLength} bytes · exact text retained</p>` + warnings(source.warnings) +
+            '<div class="mj-actions">' + `<a class="mj-action" href="${context.recipeUrl(source.recipe)}">${source.depth ? "Load full JSON recipe" : "Keep original JSON"}</a>` +
+            '<span class="mj-action-note">Replaces Magic. Input stays unchanged.</span></div></div><div class="mj-body">' +
+            preview(group.text) + "<details><summary>Follow the decoding trail" +
+            (source.depth ? ` · ${source.depth} layers` : "") + "</summary>" + trailSteps(source, report, context) + "</details>" +
+            "<details><summary>Full recipe and arguments</summary>" + chain(source.recipe) +
+            pre(Utils.generatePrettyRecipe(source.recipe, true) || "Original input (no decoding)", "Full recipe and arguments") + "</details>";
+        if (group.sources.length > 1) output += "<details><summary>Other recipes for this exact text</summary>" +
+            group.sources.slice(1).map(alternative => warnings(alternative.warnings) +
+                `<p><a href="${context.recipeUrl(alternative.recipe)}">Load alternative ${alternative.depth}-layer recipe</a></p>` +
+                chain(alternative.recipe) + pre(Utils.generatePrettyRecipe(alternative.recipe, true), "Alternative recipe and arguments")).join("") +
+            '<p class="mj-meta">Matching text from another route is not independent corroboration.</p></details>';
+        output += "</div></article>";
+    }
+    if (!count) output += "<p>Try another decoder manually, or use Any for the original general-purpose search. A refused or unsupported profile is not evidence that the input has no payload.</p>";
+    output += `<p><a href="${context.anyUrl}">Return to Any — original general-purpose Magic</a></p>` + original(report, "Original input") +
+        "<details><summary>Scope, limits and stopping points</summary>" +
+        `<p>${report.nodes.length} distinct states retained; ${report.checkedReplays} native replays, including header and carrier checks. ` +
+        `${report.retainedBytes} bytes retained across states. Results are shown deepest first, not ranked by confidence.</p>` +
+        `<p>Limits: ${report.limits.maxDepth} layers, ${report.limits.maxStates} states, ${report.limits.maxReplays} replays, ` +
+        `${report.limits.maxRetainedBytes} retained state bytes and ${report.limits.maxOutputBytes} bytes per output. ` +
+        `${report.limits.maxMillis / 1000} cooperative seconds after module preparation. Checks occur between native executions; this is not a hard CPU or process-memory sandbox.</p>` +
+        "<p>Only recognized Base64, hexadecimal, percent-encoding and guarded container profiles are followed. No generic Magic search, arbitrary JSON-field rewriting, decryption, key guessing or signature verification. " +
+        "Intensive mode, language and crib do not apply. Original/expandable inputs are limited to 64 KiB. Every offered recipe was replayed on the complete input to this Magic step; surrounding recipe steps remain in place.</p>" +
+        (report.stops.length ? "<ul>" + report.stops.map(stop => `<li>${stop.node === undefined ? "" : `State ${stop.node}: `}${escape(stop.reason)}` +
+            (stop.detail ? ` — ${escape(stop.detail)}` : "") + "</li>").join("") + "</ul>" : "<p>No additional stop or refusal was recorded within these profiles.</p>") +
+        "<p>Format matches do not establish producer identity or intended meaning. Payload duplicate keys, schemas, timestamps and application claims are not validated. " +
+        "A complete check covers only these profiles and budgets, not every possible decoding.</p></details></section>";
+    return output;
+}
