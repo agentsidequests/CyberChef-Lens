@@ -5,6 +5,7 @@
  */
 import Utils from "../Utils.mjs";
 import {compareJsonTexts} from "./JsonText.mjs";
+import {presentJsonHazards} from "./JsonHazardPresentation.mjs";
 
 const escape = value => Utils.escapeHtml(String(value));
 const routine = note => /^(One checksummed zlib layer only;|Explicit zip:DEF profile:)/.test(note);
@@ -163,6 +164,7 @@ function resultCard(group, index, count, context) {
         `<h3>${count > 1 ? `Result ${index + 1} · ` : ""}${escape(role)}</h3>` +
         `<p class="mj-meta">${escape(compressionCue(group.sources))} · ${group.byteLength} bytes</p>` +
         warnings(group.interpretationWarnings) +
+        presentJsonHazards(group.text) +
         '<div class="mj-actions">' + `<a class="mj-action" href="${context.recipeUrl(source.recipe)}">${actionLabel(source, role)}</a>` +
         '<span class="mj-action-note">Replaces Magic. Input stays unchanged.</span></div></div><div class="mj-body">' +
         preview(group.text) +
@@ -187,7 +189,7 @@ function hypotheses(report) {
 }
 
 const limits = "<p>Only discovered candidates were checked, not every possible decoding. Exact text differences, including formatting, remain separate. " +
-    "Compatible wrapper shapes do not identify their producer. No signature, schema or intended-meaning verification; duplicate-key checks cover selected headers/envelopes only, not all payloads.</p>" +
+    "Compatible wrapper shapes do not identify their producer. Selected payload parsing cautions use bounded text inspection, not signature, schema or intended-meaning verification. Header/envelope duplicate refusals remain separate from payload cautions.</p>" +
     "<p>Compressed paths use one bounded checksummed zlib layer or, for explicit zip:DEF compact tokens, one bounded raw-DEFLATE layer with no checksum. " +
     "Gzip, recursive compression, general JWE and credential validation remain outside these wrapper paths. Compressed input is limited to 64 KiB; retained output to 1 MiB, with at most one overflow-detection byte. " +
     "Decoder workspace and output assembly need additional memory; this is not an absolute process-memory limit. Invalid UTF-8, malformed JSON, scalar payloads and noncanonical Base64url fields cannot earn the payload label.</p>";
@@ -291,6 +293,7 @@ export function presentPayloadTrail(report, context) {
         output += '<article class="mj-card"><div class="mj-head">' +
             `<h3>${count > 1 ? `Result ${index + 1} · ` : ""}${source.depth ? `Layer ${source.depth} · JSON reached via ${escape(source.kind)}` : "Original input · complete JSON"}</h3>` +
             `<p class="mj-meta">${escape(compressionCue(group.sources))} · ${group.byteLength} bytes · exact text retained</p>` + warnings(source.warnings) +
+            presentJsonHazards(group.text) +
             '<div class="mj-actions">' + `<a class="mj-action" href="${context.recipeUrl(source.recipe)}">${source.depth ? "Load full JSON recipe" : "Keep original JSON"}</a>` +
             '<span class="mj-action-note">Replaces Magic. Input stays unchanged.</span></div></div><div class="mj-body">' +
             preview(group.text) + "<details><summary>Follow the decoding trail" +
@@ -316,7 +319,7 @@ export function presentPayloadTrail(report, context) {
         "Intensive mode, language and crib do not apply. Original/expandable inputs are limited to 64 KiB. Every offered recipe was replayed on the complete input to this Magic step; surrounding recipe steps remain in place.</p>" +
         (report.stops.length ? "<ul>" + report.stops.map(stop => `<li>${stop.node === undefined ? "" : `State ${stop.node}: `}${escape(stop.reason)}` +
             (stop.detail ? ` — ${escape(stop.detail)}` : "") + "</li>").join("") + "</ul>" : "<p>No additional stop or refusal was recorded within these profiles.</p>") +
-        "<p>Format matches do not establish producer identity or intended meaning. Payload duplicate keys, schemas, timestamps and application claims are not validated. " +
+        "<p>Format matches do not establish producer identity or intended meaning. Selected payload parsing cautions do not validate a duplicate-member policy, schema, timestamps or application claims. " +
         "A complete check covers only these profiles and budgets, not every possible decoding.</p></details></section>";
     return output;
 }

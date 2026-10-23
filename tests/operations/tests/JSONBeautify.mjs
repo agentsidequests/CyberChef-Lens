@@ -153,4 +153,16 @@ TestRegister.addTests([
         expectedOutput: "Lossless mode requires a complete strict JSON document; JSON5 syntax is not supported.",
         recipeConfig: [{op: "JSON Beautify", args: ["  ", false, true, true]}]
     },
+    {
+        name: "JSON Beautify: lossless formatted output reports escaped duplicate aliases",
+        input: String.raw`{"role":"reader","\u0072ole":"admin","account":9007199254740993}`,
+        expectedMatch: /2 parsing cautions[\s\S]+Repeated member name[\s\S]+line 3, column 3[\s\S]+9007199254740993/,
+        recipeConfig: [{op: "JSON Beautify", args: ["  ", false, true, true]}]
+    },
+    {
+        name: "JSON Beautify: lossless plain presentation stays escaped text, not caution HTML",
+        input: '{"a":1,"a":2,"n":1e400}',
+        expectedOutput: "{\n  &quot;a&quot;: 1,\n  &quot;a&quot;: 2,\n  &quot;n&quot;: 1e400\n}",
+        recipeConfig: [{op: "JSON Beautify", args: ["  ", false, false, true]}]
+    },
 ]);

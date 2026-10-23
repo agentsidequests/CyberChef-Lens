@@ -52,6 +52,9 @@ Available now:
 - **Lossless JSON inspection:** format strict JSON without rounding numbers or
   dropping duplicate members; compare the formatted texts with an opt-in Diff
   mode. Lens also locates the first changed token across checked results.
+- **Parsing cautions:** locate repeated member names and selected JavaScript
+  numeric range problems before passing a decoded document to another tool.
+  Original fields and number spellings stay intact; no value is silently chosen.
 - Replays native candidate recipes on complete input and checks strict UTF-8 and
   whole-document JSON, instead of accepting a valid-looking prefix.
 - Retains competing exact texts and recipe provenance. A syntax match does not
@@ -127,6 +130,25 @@ and 64 nested containers. Formatting output is capped at 1 MiB. Lens compares
 at most eight retained texts against one explicit reference and shows only the
 first changed token. The opt-in full Diff has cooperative work limits and
 refuses a completion claim if it cannot finish.
+
+Valid JSON is not the end of the investigation. Consider:
+
+```json
+{"role":"reader","\u0072ole":"admin","account":9007199254740993}
+```
+
+The two role names decode to the same string. JavaScript's ordinary JSON parser
+keeps the later value and rounds the account number; another consumer may handle
+them differently. Lens shows **2 parsing cautions**, with the original locations
+and the exact tokens. Open **Inspect locations and parsing consequences** before
+using the recovered values. It does not choose a role or replace the account ID.
+
+These selected checks appear on Lens result cards and in JSON Beautify's opt-in
+lossless formatted view. They cover repeated names, numeric overflow, nonzero
+numbers becoming zero, and magnitudes outside JavaScript's safe-integer range.
+They are not a complete floating-point precision or security audit. A quiet card
+is not a safety verdict. Inspection is limited to the text budgets above, with
+at most 16 detailed findings shown and complete counts for an inspected document.
 
 ## Roadmap
 

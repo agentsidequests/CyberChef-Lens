@@ -78,3 +78,22 @@ test("two valid interpretations remain separate instead of selecting the most re
     assert.match(operation.present(), /%41%42%43%44/);
     assert.match(operation.present(), /ABCD/);
 });
+
+for (const goal of ["JSON object or array", "JSON wrappers", "JSON payload trail"]) test(`${goal} adds cautions without changing the recovered text or replay`, async () => {
+    const body = String.raw`{"role":"reader","\u0072ole":"admin","account":9007199254740993,"limit":1e400,"tiny":1e-4000}`;
+    const input = `session=${Buffer.from(body).toString("base64")}; session.sig=${signature}`;
+    const args = [3, false, false, "", goal], operation = new Magic(), dish = new Dish(bytes(input), Dish.ARRAY_BUFFER);
+    await operation.run({dish, progress: 0, opList: [{ingValues: args, config: {op: "Magic", args}}]});
+    const report = await dish.get(Dish.JSON), html = operation.present();
+    const candidate = goal === "JSON wrappers" ? report.candidates.find(item=>item.accepted && item.evidence.text === body) : report.outputs.find(item=>item.text === body)?.sources[0];
+    assert.ok(candidate);
+    assert.equal(new TextDecoder().decode(await replayMagicRecipe(candidate.recipe, bytes(input))), body);
+    assert.equal(report.original, input);
+    assert.match(html, /4 parsing cautions/);
+    assert.match(html, /Repeated member name/);
+    assert.match(html, /9007199254740993/);
+    assert.match(html, /Overflows JavaScript Number/);
+    assert.match(html, /Nonzero number becomes zero/);
+    const action = goal === "JSON payload trail" ? "Load full JSON recipe" : "Load payload recipe";
+    assert.ok(html.indexOf("4 parsing cautions") < html.indexOf(action));
+});

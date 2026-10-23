@@ -71,6 +71,30 @@ or removals; the comparison status still reports differing token text. A custom
 sample delimiter must be nonempty and at most 1 KiB UTF-8. No cryptographic,
 schema, semantic-equivalence or duplicate-member interpretation is performed.
 
+## Selected parsing cautions
+
+Lens cards and JSON Beautify's opt-in lossless formatted view inspect strict JSON
+for repeated decoded member names within the same object, selected JavaScript
+numeric overflow/underflow and magnitudes outside the safe-integer range. String
+escapes are decoded for name comparison; Unicode normalization is not applied.
+Separate objects have separate name scopes. Maps, not ordinary objects, hold
+untrusted member names. Numeric conversion is a diagnostic probe only and never
+supplies output or selects a duplicate value.
+
+The existing 64 KiB / 16,384-token / depth-64 limits apply. All category counts
+cover the complete inspected document; at most 16 detailed findings are shown
+(the low-level maximum is 32). Invalid or oversize text reports inspection not
+completed, not a clean document. Numeric checks are not a complete precision
+analysis, and duplicate checks do not define an application's member policy.
+Absence of a caution does not establish safety, validity for a schema or authenticity.
+
+Locations on Lens cards refer to the exact decoded text, not the encoded input.
+JSON Beautify receives formatted output for presentation, so its coordinates
+explicitly refer to that formatted output rather than the original input. Plain
+lossless output and all default legacy formatting remain unchanged. A formatter
+can produce more than 64 KiB from a small input; in that case its presentation
+reports that the caution inspection could not complete.
+
 ## Inherited dependency advisories — reviewed October 22, 2026
 
 The production lockfile audit reports 26 affected package entries: 1 critical,

@@ -10,6 +10,7 @@ import OperationError from "../errors/OperationError.mjs";
 import Operation from "../Operation.mjs";
 import Utils from "../Utils.mjs";
 import {formatJsonText} from "../lib/JsonText.mjs";
+import {presentJsonHazards} from "../lib/JsonHazardPresentation.mjs";
 
 /**
  * JSON Beautify operation
@@ -26,6 +27,7 @@ class JSONBeautify extends Operation {
         this.module = "Code";
         this.description = "Indents and pretty prints JavaScript Object Notation (JSON) code.<br><br>Tags: json viewer, prettify, syntax highlighting";
         this.description += "<br><br><b>Lossless strict JSON:</b> Preserve number spelling, duplicate members, string escapes and member order. Only insignificant whitespace is replaced; JSON5 syntax is refused. Input limit 64 KiB, 16,384 tokens, depth 64; formatted output limit 1 MiB. Sorting keys is not supported in this mode. The formatted view is escaped text rather than a parsed collapsible tree. Original behavior remains the default.";
+        this.description += " The lossless formatted view also flags repeated member names and selected JavaScript numeric range effects. Its positions refer to the formatted output; it is not a complete precision, schema or security audit.";
         this.inputType = "string";
         this.outputType = "string";
         this.presentType = "html";
@@ -93,7 +95,9 @@ class JSONBeautify extends Operation {
      */
     present(data, args) {
         if (args[3] && !args[2]) return Utils.escapeHtml(data);
-        if (args[3]) return '<section style="white-space:normal"><p><strong>Lossless strict JSON.</strong> Number spelling, duplicate members, escapes and member order retained. Whitespace reformatted; no schema or authenticity verification.</p><pre style="white-space:pre-wrap;overflow-wrap:anywhere" tabindex="0" aria-label="Lossless formatted JSON">' + Utils.escapeHtml(data) + "</pre></section>";
+        if (args[3]) return '<section style="white-space:normal"><p><strong>Lossless strict JSON.</strong> Number spelling, duplicate members, escapes and member order retained. Whitespace reformatted; no schema or authenticity verification.</p>' +
+            presentJsonHazards(data, "the formatted output shown below, not the original input") +
+            '<pre style="white-space:pre-wrap;overflow-wrap:anywhere" tabindex="0" aria-label="Lossless formatted JSON">' + Utils.escapeHtml(data) + "</pre></section>";
         const formatted = args[2];
         if (!formatted) return Utils.escapeHtml(data);
 
