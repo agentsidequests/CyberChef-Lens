@@ -7,9 +7,9 @@
 #lens-workspace .lw-header { display: flex; justify-content: space-between; align-items: center; gap: 15px; padding: 20px 0; border-bottom: 1px solid #cad6df; }
 #lens-workspace .lw-brand { font-weight: 700; letter-spacing: -.4px; font-size: 20px; }
 #lens-workspace .lw-local { display: inline-block; margin-left: 14px; font-size: 12px; color: #385e50; background: #dfede6; padding: 3px 9px; border-radius: 20px; }
-#lens-workspace .lw-intro { padding: 32px 0 16px; max-width: 700px; }
+#lens-workspace .lw-intro { padding: 24px 0 16px; max-width: 700px; }
 #lens-workspace .lw-eyebrow { color: #45636f; font-size: 11px; font-weight: bold; letter-spacing: 2px; margin: 0 0 10px; }
-#lens-workspace h1 { font-size: clamp(28px, 4vw, 42px); line-height: 1.12; letter-spacing: -1px; margin: 0 0 14px; font-weight: 700; color: #133744; }
+#lens-workspace h1 { font-size: clamp(28px, 3vw, 36px); line-height: 1.15; letter-spacing: -1px; margin: 0 0 14px; font-weight: 700; color: #133744; }
 #lens-workspace h2 { font-size: 21px; font-weight: 600; margin: 0 0 12px; color: #203247; }
 #lens-workspace p { margin: 0 0 12px; }
 #lens-workspace button, #lens-workspace select { font: inherit; border: 1px solid #9cb2bf; border-radius: 5px; padding: 9px 13px; color: #203247; background: #fff; cursor: pointer; }
@@ -24,7 +24,7 @@
 #lens-workspace .lw-source-title { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; gap: 10px; }
 #lens-workspace .lw-source-title label { font-weight: 600; margin: 0; }
 #lens-workspace .lw-source-title button { padding: 3px 9px; font-size: 12px; }
-#lens-workspace textarea { display: block; width: 100%; min-height: 150px; resize: vertical; padding: 12px; border: 1px solid #b4c5d1; border-radius: 4px; font: 12px/1.6 Consolas, monospace; color: #203247; background: #fafcfd; overflow-wrap: anywhere; }
+#lens-workspace textarea { display: block; width: 100%; min-height: 130px; resize: vertical; padding: 12px; border: 1px solid #b4c5d1; border-radius: 4px; font: 12px/1.6 Consolas, monospace; color: #203247; background: #fafcfd; overflow-wrap: anywhere; }
 #lens-workspace .lw-file { display: block; margin: 14px 0 7px; font-size: 12px; font-weight: 600; }
 #lens-workspace input[type="file"] { display: block; max-width: 100%; margin: 5px 0; font-size: 12px; }
 #lens-workspace .lw-source-note { font-size: 11px; color: #496171; overflow-wrap: anywhere; margin: 0; }

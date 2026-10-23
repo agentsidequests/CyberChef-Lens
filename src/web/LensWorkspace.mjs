@@ -21,7 +21,7 @@ export default function setupLensWorkspace() {
         <span class="lw-local">Local · no upload</span></div>
         <button type="button" id="lw-close">Recipe workspace ↗</button></header>
         <main><div class="lw-intro"><p class="lw-eyebrow">GUIDED WORKSPACE</p>
-        <h1>Follow the JSON.<br>Keep the evidence.</h1>
+        <h1>Follow the JSON. Keep the evidence.</h1>
         <p>Find JSON inside supported encoded layers, inspect the cautions, and carry the exact result forward.</p></div>
         <div class="lw-mode" role="group" aria-label="Investigation task">
         <button type="button" id="lw-single" aria-pressed="true">Investigate data</button>
@@ -161,6 +161,7 @@ export default function setupLensWorkspace() {
             const controls = document.createElement("section");
             controls.className = "lw-compare";
             controls.innerHTML = "<h2>Compare selected JSON layers</h2><p>Choose one result from each source. The first listed layer is a starting selection, not a preferred truth.</p>";
+            controls.querySelector("h2").tabIndex = -1;
             reports.forEach((report, index) => {
                 const label = document.createElement("label");
                 label.textContent = `Source ${index ? "B" : "A"} layer `;
