@@ -3,6 +3,8 @@ import assert from "node:assert/strict";
 import {readFileSync, existsSync} from "node:fs";
 import {resolve, dirname} from "node:path";
 import {fileURLToPath} from "node:url";
+import template from "lodash/template.js";
+import Utils from "../../src/core/Utils.mjs";
 
 const root = new URL("../../", import.meta.url);
 const read = name => readFileSync(new URL(name, root), "utf8");
@@ -26,6 +28,11 @@ test("the app's existing help exposes all four real goals without a new state-ch
     for (const goal of ["Any", "JSON object or array", "JSON wrappers", "JSON payload trail"]) assert.ok(html.includes(`<strong>${goal}</strong>`));
     assert.match(html, /Crib.*not used|not use.*Crib/s);
     assert.match(html, /64 KiB/);
+    const attribution = html.match(/<details[^>]*>\s*<summary>Build and licensing<\/summary>[\s\S]*?<\/details>/)?.[0];
+    assert.ok(attribution);
+    assert.doesNotMatch(attribution.split(">")[0], /\bopen\b/);
+    assert.match(attribution, /Crown Copyright/);
+    assert.match(attribution, /Apache Licence/);
 });
 
 test("the demo opens a same-app document separately with source-bound input", () => {
@@ -39,6 +46,19 @@ test("the demo opens a same-app document separately with source-bound input", ()
     assert.match(anchor, /htmlWebpackPlugin\.options\.lensExampleInput/);
     assert.equal((config.match(/lensExampleInput: /g) || []).length, 2, "prod and dev use the same fixture");
     assert.match(config, /readFileSync\("examples\/lens-investigation\.txt"\)/);
+});
+
+test("the rendered demo survives CyberChef's native URI parser byte for byte", () => {
+    const anchor = read("src/web/html/index.html").match(/<a id="lens-guide-demo"[\s\S]*?<\/a>/)[0];
+    const sample = readFileSync(new URL("examples/lens-investigation.txt", root));
+    for (const bytes of [sample, Buffer.from([0xfb, 0xff, 0xfe, 0x00])]) {
+        const encoded = bytes.toString("base64");
+        const rendered = template(anchor)({htmlWebpackPlugin: {options: {lensExampleInput: encoded}}});
+        const href = rendered.match(/href="([^"]+)"/)[1].replaceAll("&amp;", "&");
+        const params = Utils.parseURIParams(new URL(href, "http://localhost/").hash);
+        assert.equal(params.input, encoded, "padding and + must not become a missing parameter or a space");
+        assert.deepEqual(Buffer.from(params.input, "base64"), bytes);
+    }
 });
 
 test("reopening help returns to the guide without changing the working recipe or input", () => {
