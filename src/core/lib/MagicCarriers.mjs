@@ -55,6 +55,21 @@ function jsonFieldRecipe(path) {
 /** A refusal affects this carrier route only, not native generic JSON evidence. */
 const unsupported = reason => ({handled: true, status: "unsupported", reason, candidates: []});
 
+/** One copied field/value only; Bearer does not imply JWT or authentication. */
+export function recognizeBearerAuthorization(text) {
+    if (!/^[\t ]*(?:Authorization\b|Bearer\b)/i.test(text)) return {handled: false};
+    const pattern = "^[\\t ]*(?:Authorization:[\\t ]*)?Bearer +([A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]*)[\\t ]*(?:\\r?\\n)?(?![\\s\\S])";
+    const match = new RegExp(pattern, "i").exec(text);
+    if (!match) return unsupported("Paste one unquoted Authorization: Bearer field or Bearer value only, not a header block, extra credential or folded line.");
+    const fields = match[1].split(".");
+    if (!url64(fields[0]) || !url64(fields[1]) || !url64(fields[2], true)) {
+        return unsupported("Bearer credentials need not be JWTs. This profile requires canonical unpadded compact fields; opaque or noncanonical credentials are not decoded.");
+    }
+    return {handled: true, token: match[1], unsigned: fields[2] === "", recipe: [
+        {op: "Regular expression", args: ["User defined", pattern, true, false, false, false, false, false, "List capture groups"]}
+    ]};
+}
+
 /** Recognize a JSON envelope with at most two signature records. */
 function jsonEnvelope(text) {
     let value;

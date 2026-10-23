@@ -166,10 +166,21 @@ not six independent messages or an accuracy benchmark. Native Magic already
 recovers the values in three of them, and manual recipes recover all six.
 See [the comparison scope](docs/COMPARISON.md#rfc-format-coverage).
 
-One known copying-context gap remains: a token prefixed with `Authorization:
-Bearer` is not automatically stripped by these profiles. Remove that prefix
-manually before investigation. Unencoded/detached payloads and arbitrary HTTP
-captures are not newly supported by the signature-coverage change.
+## Copied Bearer fields
+
+You can paste one `Authorization: Bearer <token>` field, or just
+`Bearer <token>`, into any JSON investigation goal. The field and compact token
+are one named carrier profile, with native extraction from the unchanged input.
+Try the [fictional header sample](examples/lens-bearer-header.txt); it reaches the
+same exact reference payload as the three-layer demo above.
+
+Field and scheme names are case-insensitive. One terminal LF or CRLF is allowed.
+This narrow profile requires canonical unpadded compact fields and a checked
+object header. It refuses ambiguous copies, unsupported header declarations and
+opaque credentials rather than guessing which token to use. The Bearer label
+does not authenticate a session or verify a JWT. Header blocks, quoted/curl
+snippets, padded fields and compressed or detached/unencoded Bearer payloads
+remain outside this profile. General-purpose **Any** is unchanged.
 
 ## Roadmap
 

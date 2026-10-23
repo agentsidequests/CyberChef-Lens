@@ -8,7 +8,7 @@
  */
 import {inspectMagicCandidates, validateJsonDocument} from "./MagicEvidence.mjs";
 import {annotateWrapperInterpretation} from "./MagicInterpretation.mjs";
-import {recognizeJsonCarriers, carrierGuardFailure, hasDuplicateJsonMembers} from "./MagicCarriers.mjs";
+import {recognizeJsonCarriers, recognizeBearerAuthorization, carrierGuardFailure, hasDuplicateJsonMembers} from "./MagicCarriers.mjs";
 
 const ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
 const owns = (value, key) => Object.prototype.hasOwnProperty.call(value, key);
@@ -126,9 +126,11 @@ export async function inspectJsonWrappers(input, replay, {prepare, ...budgets}={
     } catch {
         return {status: "unsupported", reason: "Input is not strict UTF-8.", candidates: []};
     }
-    const text = original.trim();
     const candidates = [];
     const report = {original, status: "complete", reason: null, candidates};
+    const bearer = recognizeBearerAuthorization(original);
+    if (bearer.status === "unsupported") return {...report, status: "unsupported", reason: bearer.reason};
+    const text = (bearer.handled ? bearer.token : original).trim();
     // The marker is structural, never disposable Base64 padding.
     if (text.startsWith(".")) {
         const candidate = compressedCandidate(text);
@@ -136,7 +138,7 @@ export async function inspectJsonWrappers(input, replay, {prepare, ...budgets}={
             reason: "Leading-dot input is not a supported compressed-container shape. No decompression was attempted."};
         candidates.push(candidate);
     }
-    const carrier = candidates.length ? {handled: true} : recognizeJsonCarriers(original);
+    const carrier = candidates.length ? {handled: true} : recognizeJsonCarriers(bearer.handled ? text : original);
     if (carrier.status === "unsupported") return {...report, ...carrier, original};
     candidates.push(...carrier.candidates || []);
     if (!carrier.handled) {
@@ -199,6 +201,20 @@ export async function inspectJsonWrappers(input, replay, {prepare, ...budgets}={
                          {name: signature === "" ? "No signature (unsigned; claims unverified)" : "Possible signature (unverified)", value: signature}]});
         }
     }
+    if (bearer.handled) {
+        // Keep only the compact-header route, never a legacy serializer guess.
+        // Native extraction still replays against the complete copied field.
+        for (let index = candidates.length - 1; index >= 0; index--) {
+            const candidate = candidates[index];
+            if (!candidate.headerRecipe) candidates.splice(index, 1);
+            else {
+                candidate.origin = "bearer-field";
+                candidate.bearer = bearer;
+                candidate.recipe = bearer.recipe.concat(candidate.recipe);
+                candidate.headerRecipe = bearer.recipe.concat(candidate.headerRecipe);
+            }
+        }
+    }
     // Decode a possible compact-token header before choosing its payload recipe.
     // Both still consume the same evidence pool, timer and cancellation budget.
     const probes = candidates.flatMap(candidate => [
@@ -208,7 +224,7 @@ export async function inspectJsonWrappers(input, replay, {prepare, ...budgets}={
     try {
         if (probes.length && prepare) await prepare([...probes.map(probe => probe.recipe),
             // Qualify the optional decoder before the shared evidence clock.
-                                                     ...(candidates.some(candidate => candidate.headerRecipe && !candidate.compactVariant) ? [[{op: "Raw Inflate Bounded", args: [1048576]}]] : [])]);
+                                                     ...(candidates.some(candidate => candidate.headerRecipe && !candidate.compactVariant && !candidate.bearer) ? [[{op: "Raw Inflate Bounded", args: [1048576]}]] : [])]);
     } catch {
         return {...report, status: "incomplete", reason: "Native decoder modules could not be prepared.",
             candidates: candidates.map(candidate => ({...candidate, accepted: false, evidence: {status: "not-checked"}}))};
@@ -220,7 +236,8 @@ export async function inspectJsonWrappers(input, replay, {prepare, ...budgets}={
         if (headerProbe) {
             const checked = validateJsonDocument(output, budgets.maxOutputBytes);
             if (checked.status === "passed") {
-                if (headerProbe.headerFor.compactVariant) headerProbe.headerFor.variantRefusal = compactVariantRefusal(headerProbe.headerFor, checked.text);
+                if (headerProbe.headerFor.bearer) headerProbe.headerFor.variantRefusal = compactVariantRefusal({compactVariant: {unsigned: headerProbe.headerFor.bearer.unsigned}}, checked.text);
+                else if (headerProbe.headerFor.compactVariant) headerProbe.headerFor.variantRefusal = compactVariantRefusal(headerProbe.headerFor, checked.text);
                 else configureCompressedJws(headerProbe.headerFor, checked.text);
             }
         }
@@ -254,6 +271,12 @@ export async function inspectJsonWrappers(input, replay, {prepare, ...budgets}={
             !candidate.compressionRefusal && !candidate.variantRefusal;
         candidate.accepted = candidate.evidence.status === "passed" && candidate.extractionEligible;
         annotateWrapperInterpretation(candidate);
+        if (candidate.bearer) {
+            candidate.kind = "Bearer-contained compact token";
+            candidate.resultRole = "Bearer-contained JSON payload (unverified)";
+            candidate.payloadAction = candidate.accepted;
+            candidate.interpretationWarnings.unshift("The Bearer label does not verify a JWT, signature, issuer, authorization or claims. One copied field is inspected locally; no credential is sent anywhere.");
+        }
         if (candidate.variantRefusal) {
             candidate.interpretationWarnings.push(candidate.variantRefusal);
             if (report.status === "complete") report.status = "unsupported";

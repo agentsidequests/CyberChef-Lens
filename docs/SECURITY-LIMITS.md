@@ -86,8 +86,30 @@ algorithm with an arbitrary signature is not authenticated. Unknown algorithm
 names may still be inspectable data; algorithm/key compatibility is not checked.
 JSON arrays are generic JSON, not JWT Claims Set objects. Legacy short-signature
 serializer behavior, shared evidence budgets, cancellation and output bounds are
-unchanged. Bearer headers, detached/unencoded payloads and additional compressed
-profiles are not newly supported.
+unchanged. That signature-length change does not add detached/unencoded payloads
+or additional compressed profiles. The later copied-field profile is below.
+
+## Copied Bearer field profile
+
+Only a single `Authorization: Bearer` field or bare `Bearer` value is eligible.
+Field/scheme names are case-insensitive; surrounding SP/HTAB and one terminal LF
+or CRLF are allowed, with one or more SP after the scheme. Embedded/folded lines,
+extra credentials, quotes, other schemes and header blocks are not repaired.
+
+The credential must have three canonical unpadded Base64url fields. The header
+and payload are nonempty. An empty signature still requires explicit `alg:none`.
+Native header decoding must yield a complete object with a nonempty algorithm
+declaration and no duplicate names, enc/zip/crit or unsupported b64 declaration.
+The new profile does not enable compression. Opaque Bearer credentials can be
+valid authorization data but remain outside this JSON-inspection profile.
+
+The native prefix extraction, compact-field extraction and Base64url decoding
+replay against the complete original input. In trail mode this compound profile
+counts as one named carrier step, not two independently inspected layers. Shared
+input, replay, output, preparation, cancellation and cooperative-time limits
+remain. No network request, key lookup, signature verification, authorization,
+issuer, schema or claim validation is performed. Generic arrays are not JWT
+Claims Set objects. No new general-purpose Magic recognizer is added.
 
 ## Selected parsing cautions
 

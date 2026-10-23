@@ -126,5 +126,24 @@ Six separate public non-goal controls from RFC 7515, [RFC 7797](https://www.rfc-
 and [RFC 6750](https://www.rfc-editor.org/rfc/rfc6750.html#section-2.1) retain no
 false JSON-payload action. A clearly labeled header or outer-envelope inspection
 is not counted as payload recovery or a false payload result. Two author-composed
-Bearer-header contexts remain manual-only; they are not published example inputs
-and are not removed from the record to improve the score.
+Bearer-header contexts were manual-only at that checkpoint; they are not
+published example inputs and are not removed from the record to improve the score.
+
+## Copied-field follow-on
+
+The later Bearer-field profile addresses those two known composed copying
+contexts. They remain a separate denominator from the six published JSON
+representations. The manual control remains the same native extraction route.
+This is a known-gap repair, not a fresh benchmark or a new decoding algorithm.
+
+The profile follows the Bearer field syntax in [RFC 6750 section 2.1](https://www.rfc-editor.org/rfc/rfc6750.html#section-2.1)
+and case-insensitive field/scheme names in [RFC 9110](https://www.rfc-editor.org/rfc/rfc9110.html#section-11.1),
+but deliberately accepts only a narrow canonical compact-token subset. Opaque
+tokens need not be JWTs and do not earn a new JSON-payload action. See the
+[profile limits](SECURITY-LIMITS.md#copied-bearer-field-profile).
+
+A repeat of the older challenge hit the 30-second process limit twice on native
+search for the bare RFC 7515 HMAC input, before this profile was added. Its
+focused wrapper, trail and manual extraction checks completed. The earlier
+native-search result above is historical; this repeat did not freshly requalify
+that row. This remains an open native-search check, not a Bearer-profile pass.

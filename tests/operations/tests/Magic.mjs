@@ -390,5 +390,24 @@ TestRegister.addTests([
         input: Buffer.from('{"alg":"none"}').toString("base64url") + "." + Buffer.from('{"case":"refused"}').toString("base64url") + "." + Buffer.alloc(256, 19).toString("base64url"),
         expectedMatch: /No supported JSON wrapper confirmed[\s\S]+alg:none declaration with a nonempty final field/,
         recipeConfig: [{op: "Magic", args: [3, false, false, "", "JSON wrappers"]}]
+    },
+    {
+        name: "Magic wrappers: copied Bearer field keeps warning before native replay",
+        input: "Authorization: Bearer " + Buffer.from('{"alg":"HS256"}').toString("base64url") + "." + Buffer.from('{"case":"copied-field"}').toString("base64url") + "." + "A".repeat(43),
+        expectedMatch: /Bearer-contained JSON payload \(unverified\)[\s\S]+Bearer label does not verify[\s\S]+Load payload recipe/,
+        recipeConfig: [{op: "Magic", args: [3, false, false, "", "JSON wrappers"]}]
+    },
+    {
+        name: "Magic wrappers: multiple Bearer fields are refused",
+        input: "Authorization: Bearer aaa.bbb.ccc\r\nAuthorization: Bearer aaa.bbb.ccc",
+        expectedMatch: /No supported JSON wrapper confirmed[\s\S]+not a header block/,
+        unexpectedMatch: /Load payload recipe/,
+        recipeConfig: [{op: "Magic", args: [3, false, false, "", "JSON wrappers"]}]
+    },
+    {
+        name: "Magic payload trail: copied Bearer field names its compound profile",
+        input: "Bearer " + Buffer.from('{"alg":"HS256"}').toString("base64url") + "." + Buffer.from('{"case":"copied-trail"}').toString("base64url") + "." + "A".repeat(43),
+        expectedMatch: /Layer 1[\s\S]+Bearer field \/ compact token[\s\S]+Load full JSON recipe/,
+        recipeConfig: [{op: "Magic", args: [3, false, false, "", "JSON payload trail"]}]
     }
 ]);

@@ -41,3 +41,12 @@ composition and review, not a decoding algorithm that stock CyberChef lacks.
 These files are included in Lens's standalone ZIP under `examples/`. Keep that
 folder separate from Input: drag the individual input file, not the folder.
 The examples require no network service, key or API account.
+
+## A copied Authorization field
+
+`lens-bearer-header.txt` contains the same fictional compact token with an
+`Authorization: Bearer` prefix. Paste its complete text into Input and choose
+**Magic → Output goal → JSON wrappers**, or use **JSON payload trail**. The
+result keeps the exact reference payload and two parsing cautions. Its label
+does not verify a JWT, signature or session. In trail mode the field and compact
+token are one named compound carrier profile backed by native extraction.

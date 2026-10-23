@@ -216,9 +216,10 @@ export async function investigatePayloadTrail(input, {replay, prepare, maxDepth=
                 stop(wrappers.reason || "wrapper-check-incomplete");
             }
             for (const candidate of wrappers.candidates) {
-                const kind = candidate.origin === "cookie-pair" ? "Paired Cookie" :
-                    candidate.origin === "json-envelope" ? "JSON signature envelope" :
-                        candidate.headerRecipe ? candidate.compressed ? "Compressed compact token" : "Compact token" : candidate.kind;
+                const kind = candidate.origin === "bearer-field" ? "Bearer field / compact token" :
+                    candidate.origin === "cookie-pair" ? "Paired Cookie" :
+                        candidate.origin === "json-envelope" ? "JSON signature envelope" :
+                            candidate.headerRecipe ? candidate.compressed ? "Compressed compact token" : "Compact token" : candidate.kind;
                 if (canFollow(candidate)) follow(candidate.recipe, captured.get(JSON.stringify(candidate.recipe)), kind,
                     candidate.interpretationWarnings || []);
                 else if (candidate.evidence?.status === "passed" || candidate.extractionEligible === false) {
