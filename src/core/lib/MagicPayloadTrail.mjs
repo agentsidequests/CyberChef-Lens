@@ -38,7 +38,9 @@ export function recognizeTrailTransports(text) {
     const trimmed = text.trim(), candidates = [];
     const base64 = base64Transport(trimmed);
     if (base64) candidates.push({kind: "Base64 transport", recipe: [base64]});
-    if (/^(?:[\da-f]{2}){2,}$/i.test(trimmed)) candidates.push({kind: "Hexadecimal transport", recipe: [{op: "From Hex", args: ["None"]}]});
+    // Keep recognition strict while consuming its accepted boundary whitespace.
+    // Native replay still starts from the complete, unchanged original input.
+    if (/^(?:[\da-f]{2}){2,}$/i.test(trimmed)) candidates.push({kind: "Hexadecimal transport", recipe: [{op: "From Hex", args: ["Auto"]}]});
     else if (/^[\da-f]{2}(?: [\da-f]{2})+$/i.test(trimmed)) candidates.push({kind: "Hexadecimal transport", recipe: [{op: "From Hex", args: ["Space"]}]});
     if (trimmed.includes("%") && /^(?:[A-Za-z\d_.~!'()*+-]|%[\da-f]{2})+$/i.test(trimmed)) {
         try {

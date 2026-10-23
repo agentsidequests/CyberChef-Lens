@@ -58,6 +58,13 @@ members, encryption, critical declarations, unsupported encoding overrides and
 inconsistent unsigned shapes. No arbitrary JSON-field harvesting or global
 rewriting of strings inside a valid JSON document is performed.
 
+Hex transports recognize complete byte pairs, either continuous or separated by
+single spaces, with optional surrounding whitespace. Continuous hex replays
+with the native automatic delimiter mode so boundary LF/CRLF cannot add decoded
+null bytes. Internal newlines/tabs, odd pairs, prefixes and junk do not qualify
+as hex transports. The complete original input and all decoded payload bytes,
+including meaningful whitespace or invalid trailing bytes, remain unchanged.
+
 Individual compressed steps use the bounded operations below. A trail may
 compose multiple recognized steps, but every expandable state must still meet
 the 64 KiB input limit. Buffers, module loading, native-operation workspace,
