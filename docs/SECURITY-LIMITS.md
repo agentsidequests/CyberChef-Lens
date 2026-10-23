@@ -317,6 +317,10 @@ upgrade or claim that all inherited risks are resolved is made.
   this is library hardening, not a reproduced browser-operation hang.
   [Jimp release](https://github.com/jimp-dev/jimp/releases/tag/v1.6.1),
   [advisory](https://github.com/advisories/GHSA-5v7r-6r5c-r473).
+  The published browser entry is an empty stub, so this fork's bundler selects
+  the package's published ESM implementation while retaining transitive browser
+  conditions. A bundled behavior regression covers decoding, resizing and
+  malformed ASF refusal; a successful Node import alone is insufficient.
 - Node-forge remains version 1.4.0, with no released patched version listed at
   review. This fork backports the nested DigestAlgorithm element-count guard
   from [upstream candidate #1152](https://github.com/digitalbazaar/forge/pull/1152),

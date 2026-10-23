@@ -118,6 +118,9 @@ module.exports = {
         extensions: [".mjs", ".js", ".json"], // Allows importing files without extensions
         alias: {
             jquery: "jquery/src/jquery",
+            // Jimp 1.6.1 publishes an empty browser entry. Bundle its published
+            // ESM implementation; transitive browser conditions still apply.
+            "jimp$": path.join(path.dirname(require.resolve("jimp/package.json")), "dist/esm/index.js"),
         },
         fallback: {
             "assert": require.resolve("assert/"),
