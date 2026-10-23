@@ -115,6 +115,6 @@ export function compareJsonStructure(left, right, {maxChanges=128, ...limits}={}
         }
     };
     walk(a, b, []);
-    return {status: total ? "different" : left === right ? "identical" : "formatting-only", total, counts, changes,
+    return {status: total ? "different" : left === right ? "identical" : "formatting-only", total, counts, changes, maxChanges,
         truncated: total > changes.length};
 }

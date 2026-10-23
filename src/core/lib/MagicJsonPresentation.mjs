@@ -427,6 +427,19 @@ export function presentLensVerification(report, context) {
             if (route.locationSaved) output += route.locationMatches ? "<p>Saved HTTP source coordinates match the current request extraction.</p>" :
                 '<p class="mj-warning"><strong>Saved HTTP source coordinates differ.</strong> Payload equality does not validate the saved location.</p>';
             if (route.currentOrigin) output += httpLocation({httpOrigin: route.currentOrigin});
+            if (!route.payloadMatches) {
+                if (route.comparisonRoute !== route.index) output += `<p class="mj-meta">Same reproduced payload as saved route ${route.comparisonRoute}; see its field explanation above.</p>`;
+                else {
+                    const fields = route.fields;
+                    output += "<details open><summary>What changed in the payload</summary>";
+                    if (fields.report.status === "not-compared") output += '<p class="mj-warning"><strong>Field explanation unavailable.</strong> ' +
+                        `${escape(fields.report.reason)} The complete byte comparison still found a mismatch; no partial field comparison was used.</p>`;
+                    else output += presentJsonStructure(fields.report, review.payload, fields.text,
+                        {beforeLabel: "Saved payload", afterLabel: "Reproduced payload", embedded: true}) +
+                        (fields.report.status === "formatting-only" ? '<p class="mj-warning">Whitespace differs, so the exact saved payload was not reproduced. This remains a byte mismatch.</p>' : "");
+                    output += "</details>";
+                }
+            }
             if (!route.payloadMatches) output += "<details><summary>Reproduced text preview</summary>" +
                 pre(route.actualPreview, "Current reproduced text preview") +
                 (route.previewTruncated ? '<p class="mj-meta">Preview shortened to 2,048 characters. The byte comparison covered the complete result.</p>' : "") + "</details>";

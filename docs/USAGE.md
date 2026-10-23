@@ -51,6 +51,20 @@ Nothing runs while typing. Each saved route gets its own outcome:
 - **Not reproduced:** the recipe is unsupported or the bounded current search
   did not establish it. This does not prove an edit or an incorrect payload.
 
+For a payload mismatch, **What changed in the payload** compares the complete
+saved and reproduced JSON by field. It shows paths, source locations and paired
+original tokens for changed values/types, additions/removals, key spelling and
+member order. Duplicate keys match by name and occurrence; arrays by index.
+Large numbers and escape spelling are preserved. A whitespace-only difference
+still fails the exact byte check. HTTP location-only mismatches have no field diff.
+
+Field explanations require both complete documents to fit 64 KiB, 16,384 tokens
+and 64 nested containers. They retain up to 32 change rows, with complete category
+counts within those limits. If a limit is exceeded, the report says the explanation
+is unavailable; the full byte verdict remains. Duplicate routes sharing a current
+payload refer to one explanation. No prefix comparison or normalized value tree
+substitutes for the original text.
+
 The check regenerates current **payload-trail** profiles from the complete saved
 input. Imported recipes, mode, limits, status and warnings never control execution.
 Only a regenerated recipe can be compared with a saved claim; stored operations

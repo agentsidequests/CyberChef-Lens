@@ -47,6 +47,8 @@ test("genuine HTTP evidence keeps full Unicode/CRLF bytes and independently rech
     const changed = await check(edited);
     assert.equal(changed.status, "differences"); assert.equal(changed.routes[0].payloadMatches, true);
     assert.equal(changed.routes[0].locationMatches, false);
+    assert.equal(changed.routes[0].fields, null);
+    assert.doesNotMatch(presentLensVerification(changed), /What changed in the payload/);
     assert.match(presentLensVerification(changed), /Saved HTTP source coordinates differ/);
 });
 

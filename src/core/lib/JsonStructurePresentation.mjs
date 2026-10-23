@@ -71,5 +71,5 @@ export function presentJsonStructure(report, left, right, {showAdded=true, showR
         '<p class="js-note">Selected parser checks only, not a safety verdict. Cautions do not alter the compared text.</p></details>' +
         '<ol class="js-changes">' + rows.map(change => row(change, beforeLabel, afterLabel, embedded)).join("") + "</ol>" +
         (!rows.length && report.total ? "<p>No retained change rows are visible with the current filters. Restore Show added / Show removed, or use JSON (lossless) for the line comparison.</p>" : "") +
-        '<p class="js-note">Limits: 64 KiB per document, 16,384 tokens, 64 nested containers and 128 retained change records. Nothing is loaded, repaired or executed; Input stays unchanged.</p></section>';
+        `<p class="js-note">Limits: 64 KiB per document, 16,384 tokens, 64 nested containers and ${report.maxChanges || 128} retained change records. Nothing is loaded, repaired or executed; Input stays unchanged.</p></section>`;
 }

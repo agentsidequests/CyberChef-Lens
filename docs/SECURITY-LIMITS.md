@@ -176,6 +176,13 @@ file reads so the evidence file allowance cannot leak into ordinary import.
 Each reproduced route checks all exact UTF-8 payload bytes and any saved HTTP
 coordinates. Unreproduced claims remain explicitly unresolved. Current parsing
 cautions do not validate saved warnings, search status or metadata generally.
+Mismatched payloads additionally use the existing lossless source-token structural
+comparison, bounded to 64 KiB per complete document, 16,384 tokens, 64 nested
+containers and 32 retained rows per distinct reproduced output. Counts cover
+complete bounded trees. Exceeding a limit refuses the explanation without altering
+the complete byte mismatch. Duplicate routes reuse one comparison and detailed
+rendering. Whitespace-only differences remain mismatches; values are never
+re-serialized to manufacture equality. All paths and source excerpts are escaped.
 Coordinated edits can pass: this is a local content-consistency check, not
 authentication, historical tamper detection, schema verification or chain of
 custody. Module loading remains outside the cooperative search clock; these

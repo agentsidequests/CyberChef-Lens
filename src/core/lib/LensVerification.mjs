@@ -6,6 +6,7 @@
 import {inspectLensEvidence} from "./LensEvidence.mjs";
 import {investigatePayloadTrail} from "./MagicPayloadTrail.mjs";
 import {prepareMagicRecipes, replayMagicRecipe} from "./MagicEvidenceReplay.mjs";
+import {compareJsonStructure} from "./JsonStructure.mjs";
 
 const ENCODER = new TextEncoder();
 const PROFILE_OPERATIONS = new Set(["From Base64", "From Hex", "URL Decode", "Regular expression",
@@ -22,6 +23,16 @@ function firstDifference(a, b) {
 /** Compare only the four documented coordinates, with no type coercion. */
 function sameLocation(saved, current) {
     return !!saved && !!current && ["field", "line", "byteOffset", "byteLength"].every(key => saved[key] === current[key]);
+}
+
+/** Explain complete bounded documents, never a shortened preview or parsed value. */
+function fieldComparison(saved, current) {
+    try {
+        return {report: compareJsonStructure(saved, current, {maxChanges: 32}), text: current};
+    } catch (error) {
+        if (!(error instanceof RangeError || error instanceof SyntaxError)) throw error;
+        return {report: {status: "not-compared", reason: error.message}};
+    }
 }
 
 /**
@@ -57,7 +68,8 @@ export async function verifyLensEvidence(input, {signal, maxMillis=3000,
         const {node, source} = witness;
         if (!comparisons.has(node.id)) {
             const payloadMatches = node.text === review.payload;
-            comparisons.set(node.id, {payloadMatches, actualBytes: node.byteLength,
+            comparisons.set(node.id, {payloadMatches, actualBytes: node.byteLength, comparisonRoute: index + 1,
+                fields: payloadMatches ? null : fieldComparison(review.payload, node.text),
                 firstDifference: payloadMatches ? null : firstDifference(expected, ENCODER.encode(node.text)),
                 actualPreview: payloadMatches ? null : node.text.slice(0, 2048),
                 previewTruncated: !payloadMatches && node.text.length > 2048});

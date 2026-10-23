@@ -103,6 +103,7 @@ test("detail truncation retains complete category totals and never claims equali
     const small = compareJsonStructure(left, right, {maxChanges: 2});
     assert.equal(small.total, 220);
     assert.equal(small.changes.length, 2);
+    assert.match(presentJsonStructure(small, left, right), /2 retained change records/);
 });
 
 test("filtered additions/removals retain true totals even after retained-row truncation", () => {
