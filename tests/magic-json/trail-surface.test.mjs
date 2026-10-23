@@ -1,5 +1,6 @@
 import {test, before} from "node:test";
 import assert from "node:assert/strict";
+import {deflateRawSync} from "node:zlib";
 import log from "loglevel";
 import Magic from "../../src/core/operations/Magic.mjs";
 import Dish from "../../src/core/Dish.mjs";
@@ -56,11 +57,20 @@ test("depth-ceiling and refusal views do not invent a usable inner result", asyn
     const limited = await run(envelope(compact(inner)), 1);
     assert.ok(!limited.report.outputs.some(output => output.text === inner));
     assert.match(limited.operation.present(), /Depth ceiling reached/);
+    assert.match(limited.operation.present(), /\(1 layer\)/);
     const refused = `${encode('{"alg":"HS256","crit":["unknown"]}')}.${encode(inner)}.${signature}`;
     const result = await run(Buffer.from(refused).toString("base64"));
     assert.equal(result.report.outputs.length, 0);
     assert.doesNotMatch(result.operation.present(), /Load full JSON recipe/);
     assert.match(result.operation.present(), /wrapper-not-followed/);
+});
+
+test("the raw-DEFLATE boundary is visible before the full recipe action", async () => {
+    const input = Buffer.from(`${encode('{"alg":"ES256","zip":"DEF"}')}.${deflateRawSync(Buffer.from('{"x":1}')).toString("base64url")}.${"A".repeat(86)}`).toString("base64");
+    const {operation} = await run(input);
+    const html = operation.present();
+    assert.ok(html.indexOf("Raw DEFLATE · bounded output (1 MiB) · no checksum") < html.indexOf("Load full JSON recipe"));
+    assert.match(html, /Raw DEFLATE · bounded output \(1 MiB\) · no checksum/);
 });
 
 test("presenter escapes stop metadata and labels a partial search even with a prior witness", () => {

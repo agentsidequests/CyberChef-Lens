@@ -241,12 +241,12 @@ export function presentPayloadTrail(report, context) {
         '<p class="mj-trust"><strong>Decoded, not verified.</strong> A deeper layer is not a more trustworthy one. Signatures and claims remain unverified.</p>';
     if (report.status !== "complete") output += '<div class="mj-warning" role="note"><strong>Search stopped early.</strong> ' +
         `Reason: ${escape(report.reason || report.status)}. Any results below were checked before the stop; the search is incomplete.</div>`;
-    if (report.depthLimited) output += `<p class="mj-meta">Depth ceiling reached (${report.limits.maxDepth} layers). Further layers were not examined.</p>`;
+    if (report.depthLimited) output += `<p class="mj-meta">Depth ceiling reached (${report.limits.maxDepth} ${report.limits.maxDepth === 1 ? "layer" : "layers"}). Further layers were not examined.</p>`;
     for (const group of report.outputs) {
         const source = group.sources[0];
         output += '<article class="mj-card"><div class="mj-head">' +
             `<h3>${source.depth ? `Layer ${source.depth} · JSON reached via ${escape(source.kind)}` : "Original input · complete JSON"}</h3>` +
-            `<p class="mj-meta">${group.byteLength} bytes · exact text retained</p>` + warnings(source.warnings) +
+            `<p class="mj-meta">${escape(compressionCue(group.sources))} · ${group.byteLength} bytes · exact text retained</p>` + warnings(source.warnings) +
             '<div class="mj-actions">' + `<a class="mj-action" href="${context.recipeUrl(source.recipe)}">${source.depth ? "Load full JSON recipe" : "Keep original JSON"}</a>` +
             '<span class="mj-action-note">Replaces Magic. Input stays unchanged.</span></div></div><div class="mj-body">' +
             preview(group.text) + "<details><summary>Follow the decoding trail" +

@@ -363,7 +363,7 @@ TestRegister.addTests([
     {
         name: "Magic payload trail: depth ceiling is visible without a terminal action",
         input: "ZXlKaGJHY2lPaUp1YjI1bEluMC5leUpvWld4c2J5STZJQ0ozYjNKc1pDSjku",
-        expectedMatch: /No JSON object or array[\s\S]+Depth ceiling reached \(1 layers\)/,
+        expectedMatch: /No JSON object or array[\s\S]+Depth ceiling reached \(1 layer\)/,
         unexpectedMatch: /Load full JSON recipe/,
         recipeConfig: [{op: "Magic", args: [1, false, false, "", "JSON payload trail"]}]
     },
