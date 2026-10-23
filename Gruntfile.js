@@ -288,7 +288,8 @@ module.exports = function (grunt) {
             forkNotices: {
                 files: [
                     {src: "LICENSE", dest: "build/prod/LICENSE"},
-                    {src: "THIRD_PARTY_NOTICES.md", dest: "build/prod/THIRD_PARTY_NOTICES.md"}
+                    {src: "THIRD_PARTY_NOTICES.md", dest: "build/prod/THIRD_PARTY_NOTICES.md"},
+                    {expand: true, src: ["examples/*"], dest: "build/prod/"}
                 ]
             },
             ghPages: {

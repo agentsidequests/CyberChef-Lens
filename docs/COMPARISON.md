@@ -32,6 +32,22 @@ constructed inputs without requiring historical Git objects or archived source.
 
 ## Public input sources
 
+### Small reproducible unsigned example
+
+The prior README's short unsigned example remains a public input check, separate
+from the newer fictional three-layer showcase:
+
+```text
+eyJhbGciOiJub25lIn0.eyJoZWxsbyI6ICJ3b3JsZCJ9.
+```
+
+The exact target is `{"hello": "world"}`. In the recorded native automatic
+searches it was not recovered as a complete payload. The JSON goal recovers it
+with an unsigned/unverified label. Manual middle-field extraction and Base64url
+decoding also recover it; no new decoder or authentication capability is claimed.
+
+### Source records
+
 - Go mixed-type, numeric-audience and padded examples:
   [golang-jwt fixtures](https://github.com/golang-jwt/jwt/blob/d2cffb184933cab5b685db7e9eea56326f0acc0d/parser_test.go).
 - Joe example:

@@ -1,46 +1,59 @@
 # CyberChef Lens
 
-**Follow the layers. Keep the recipe.**
+**Decode the layers. Keep the evidence.**
 
-An unofficial CyberChef fork for investigating encoded data. Give Magic a JSON
-goal, or follow a payload through several encoding and container layers. Inspect
-what each step produced, then load the complete decoding recipe. The original
-input stays put.
+An unofficial CyberChef fork for investigating encoded JSON. Follow a payload
+through its wrappers, inspect what each step produced, and load the native recipe
+that reproduces it. Large numbers, repeated fields and original text stay intact.
 
-The JSON investigation runs locally; it does not call a model or external
-service. Original operations remain available, and **Any** keeps general-purpose
-Magic unchanged.
+The added investigation runs in your browser, without a model or external
+service. General-purpose Magic remains available under **Any**.
+[Scope and security limits](docs/SECURITY-LIMITS.md) ·
+[Upstream documentation](UPSTREAM-README.md) · [Apache-2.0](LICENSE)
 
-This is not an official GCHQ release or a production-security certification.
-[Security and compatibility limits](docs/SECURITY-LIMITS.md) ·
-[Original CyberChef documentation](UPSTREAM-README.md) ·
-[Apache-2.0 license](LICENSE) · [Third-party notices](THIRD_PARTY_NOTICES.md)
+## Try one investigation
 
-## Try the difference
+A session export can decode cleanly and still deserve a closer look. This
+**fictional training sample** wraps a paired session Cookie in Base64; inside
+the Cookie is a compact token. Its signatures are fabricated.
 
-Paste this published unsigned-token example into Input:
+1. Put [the sample input](examples/lens-investigation.txt) in **Input**—drag the
+   downloaded file into the app, or copy its complete text.
+2. Add **Magic**, leave **Depth** at **3**, and choose
+   **Output goal → JSON payload trail**.
+3. Open **Inspect locations and parsing consequences**, then
+   **Follow the decoding trail**. Choose **Load full JSON recipe** to replay
+   the extraction from your unchanged original input.
 
-```text
-eyJhbGciOiJub25lIn0.eyJoZWxsbyI6ICJ3b3JsZCJ9.
-```
+![The fictional sample reaches its exact JSON through three layers, with two parsing cautions before replay.](docs/images/investigation.png)
 
-| Automatic investigation | Result |
-| --- | --- |
-| Stock Magic, in the tested searches | No complete JSON payload recovered |
-| This fork, with the JSON goal | Exact payload below, with a reusable extraction recipe |
+The recovered document contains:
 
 ```json
-{"hello": "world"}
+{
+  "case": "SUP-4821",
+  "account": 9007199254740993,
+  "role": "viewer",
+  "\u0072ole": "admin"
+}
 ```
 
-The result is labelled **Unsigned JSON payload (unverified)**. Its `alg: none`
-header declares no signature; decoding supplies no authentication, integrity or
-claim validation. Click **Load payload recipe** to replace Magic with the actual
-extraction steps. The original input stays unchanged.
+There are two reasons not to tidy this up with an ordinary parse-and-reserialize
+formatter. The account number becomes `9007199254740992` when written back through
+JavaScript's number type. And `"role"` and `"\u0072ole"` name the same member:
+JavaScript's parser keeps only the later `"admin"` value.
 
-Stock CyberChef can recover this too: manually extract the middle field and
-decode Base64url. The addition is automatic recognition, complete-output checking
-and a working recipe—not a new decoding algorithm.
+Lens preserves the original tokens and points to both problems. It does not
+choose a role, authenticate a session or decide how another application should
+interpret the document.
+
+[Sample files and manual recipe](examples/README.md) ·
+[Exact reference payload](examples/lens-investigation-payload.txt)
+
+Stock CyberChef can decode these layers with native operations too. The included
+five-operation recipe is the competent manual route. Lens adds automatic guarded
+composition, complete-output checks and a review that keeps the evidence visible.
+This demonstration is not a benchmark or a real incident.
 
 ## What's different from upstream
 
@@ -74,27 +87,18 @@ recipes recovered all eight. This was a small selected set, including repairs
 on known misses—not a blind benchmark or a general accuracy claim. See
 [comparison scope and sources](docs/COMPARISON.md).
 
-## One investigation, several layers
+## Coverage and limits
 
-Paste this fictional two-layer example into Input, add **Magic**, and choose
-**Output goal → JSON payload trail**:
+The trail follows a finite set of Base64, hexadecimal, percent-encoding and
+guarded container profiles. It does not decode arbitrary encoded-looking strings
+inside an existing JSON document. Depth means logical layers, from 0 to 5; the
+other Magic search settings do not apply. State, replay, byte and cooperative-time
+limits appear in the result. Reaching a JSON layer does not authenticate it.
 
-```text
-ZXlKaGJHY2lPaUp1YjI1bEluMC5leUpvWld4c2J5STZJQ0ozYjNKc1pDSjku
-```
-
-The trail follows **Base64 → unsigned compact token → JSON**. Open **Follow the
-decoding trail** to inspect the token between the two steps, or click **Load full
-JSON recipe** to work directly with `{"hello": "world"}`. Every offered layer
-recipe was replayed against the complete original input. The token is unsigned;
-the decoded text is not authenticated.
-
-This mode follows a finite set of Base64, hexadecimal, percent-encoding and
-guarded container profiles. It does not rewrite arbitrary encoded-looking
-strings inside an existing JSON document. Depth means logical layers, from
-0 to 5; other Magic search settings do not apply. State, replay, byte and
-cooperative-time limits are explicit in the result. It is not an exhaustive
-search or a hard resource sandbox.
+This is an experimental unofficial fork, not an official GCHQ release or a
+production-security certification.
+[Security and compatibility limits](docs/SECURITY-LIMITS.md) ·
+[Third-party notices](THIRD_PARTY_NOTICES.md)
 
 ## A formatter should not change the evidence
 
