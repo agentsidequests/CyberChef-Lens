@@ -8,6 +8,17 @@ const babel = rules.find(rule => rule.loader === "babel-loader");
 const material = rules.find(rule => rule.options?.imports === "default popper.js/dist/umd/popper.js Popper");
 const fonts = rules.find(rule => rule.generator?.filename === "assets/fonts/[name][ext]");
 
+test("fork metadata, README and build notice consistently identify CyberChef Lens", () => {
+    const pkg = JSON.parse(readFileSync(new URL("../../package.json", import.meta.url)));
+    assert.equal(pkg.repository.url, "https://github.com/agentsidequests/CyberChef-Lens");
+    assert.equal(pkg.homepage, pkg.repository.url);
+    assert.equal(pkg.bugs, `${pkg.repository.url}/issues`);
+    assert.equal(pkg.private, true);
+    assert.equal(pkg.name, "cyberchef");
+    assert.match(pkg.scripts.build, /CyberChef Lens: experimental unofficial fork; not an official GCHQ release\./);
+    assert.match(readFileSync(new URL("../../README.md", import.meta.url), "utf8"), /^# CyberChef Lens\r?\n/);
+});
+
 test("primary npm entrypoints invoke the local CLI directly rather than another npx runtime", () => {
     const {scripts} = JSON.parse(readFileSync(new URL("../../package.json", import.meta.url)));
     for (const name of ["start", "build", "test"]) {

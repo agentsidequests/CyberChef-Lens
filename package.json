@@ -2,9 +2,9 @@
   "name": "cyberchef",
   "version": "11.5.0",
   "private": true,
-  "description": "The Cyber Swiss Army Knife for encryption, encoding, compression and data analysis.",
+  "description": "Unofficial CyberChef fork with goal-aware JSON recovery, replayable recipes and bounded decompression.",
   "author": "GCHQ <CyberChef@gchq.gov.uk>",
-  "homepage": "https://gchq.github.io/CyberChef",
+  "homepage": "https://github.com/agentsidequests/CyberChef-Lens",
   "copyright": "Crown copyright 2016",
   "license": "Apache-2.0",
   "keywords": [
@@ -26,14 +26,14 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/gchq/CyberChef/"
+    "url": "https://github.com/agentsidequests/CyberChef-Lens"
   },
   "main": "src/node/wrapper.js",
   "exports": {
     "import": "./src/node/index.mjs",
     "require": "./src/node/wrapper.js"
   },
-  "bugs": "https://github.com/gchq/CyberChef/issues",
+  "bugs": "https://github.com/agentsidequests/CyberChef-Lens/issues",
   "browserslist": [
     "Chrome >= 50",
     "Firefox >= 38",
@@ -208,7 +208,7 @@
   },
   "scripts": {
     "start": "node node_modules/grunt/bin/grunt dev",
-    "build": "node node_modules/grunt/bin/grunt prod --msg=\"Experimental JSON investigation fork; not an official release.\"",
+    "build": "node node_modules/grunt/bin/grunt prod --msg=\"CyberChef Lens: experimental unofficial fork; not an official GCHQ release.\"",
     "prepare:magic-json": "node --no-warnings scripts/prepare-json-investigation.mjs",
     "test:magic-json": "node scripts/test-json-investigation.mjs",
     "node": "npx grunt node",

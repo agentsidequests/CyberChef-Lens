@@ -1,16 +1,22 @@
-# Goal-aware Magic for CyberChef
+# CyberChef Lens
 
-An experimental, unofficial CyberChef fork. Give Magic a target—**a complete JSON
-object or array**—and inspect the decoded result, its limits and the recipe that
-produced it. Decoding stays local; no model or external service is involved.
-**Any** keeps the original general-purpose Magic behavior.
+**Give Magic a target. Keep the recipe.**
+
+An unofficial CyberChef fork for investigating encoded data. Its first addition
+is a JSON goal for Magic: find a **complete object or array**, inspect competing
+results, and load the actual decoding steps into your recipe. Supported token
+and session wrappers can yield their payloads without manual field extraction.
+
+The JSON investigation runs locally; it does not call a model or external
+service. Original operations remain available, and **Any** keeps general-purpose
+Magic unchanged.
 
 This is not an official GCHQ release or a production-security certification.
 [Security and compatibility limits](docs/SECURITY-LIMITS.md) ·
 [Original CyberChef documentation](UPSTREAM-README.md) ·
 [Apache-2.0 license](LICENSE) · [Third-party notices](THIRD_PARTY_NOTICES.md)
 
-## A small before-and-after
+## Try the difference
 
 Paste this published unsigned-token example into Input:
 
@@ -36,7 +42,9 @@ Stock CyberChef can recover this too: manually extract the middle field and
 decode Base64url. The addition is automatic recognition, complete-output checking
 and a working recipe—not a new decoding algorithm.
 
-## What the JSON goal adds
+## What's different from upstream
+
+Available now:
 
 - Replays native candidate recipes on complete input and checks strict UTF-8 and
   whole-document JSON, instead of accepting a valid-looking prefix.
@@ -53,6 +61,13 @@ targets automatically, versus four with the pinned native Magic baseline. Manual
 recipes recovered all eight. This was a small selected set, including repairs
 on known misses—not a blind benchmark or a general accuracy claim. See
 [comparison scope and sources](docs/COMPARISON.md).
+
+## Roadmap
+
+The first milestone is the experimental JSON investigation, its portable tests
+and a reproducible source build. Clean-install CI still needs a completed remote
+run. The next larger investigation feature has not been selected; no additional
+analyzer is being advertised as available or promised for a particular date.
 
 ## Run from source
 
