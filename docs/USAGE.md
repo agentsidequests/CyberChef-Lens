@@ -4,7 +4,37 @@ For the short introduction and mode chooser, start with the [README](../README.m
 This guide covers the sample, exact-text tools, supported copied fields and
 evidence recovery. [Security limits](SECURITY-LIMITS.md) own the detailed bounds.
 
-## Pick a Magic goal
+## Guided workspace
+
+Choose **Lens workspace** at the top left. **Investigate data** accepts a pasted
+source or one UTF-8 text file; **Find JSON** runs the existing payload trail at a
+default limit of three layers. **Search settings** exposes the one-to-five layer
+limit. Nothing runs while you type. **Try the fictional example** loads the
+three-layer fixture without starting a check.
+
+**Compare two captures** gives Source A and Source B separate paste/file inputs.
+Choose **Find JSON in both sources**, then select the layer from each source and
+choose **Compare selected layers**. The first listed layer is only a starting
+selection, not a preferred meaning. Structural comparison keeps exact tokens,
+duplicate occurrences, locations and complete bounded counts. Its 64 KiB per
+decoded document limit remains in force even if decoding reached a larger JSON.
+
+Loaded files retain their original UTF-8 text, including CRLF. Editing a source
+creates new text using the browser textarea's newline representation. Sources,
+settings and selections invalidate dependent results; **Cancel** stops the
+isolated worker and retains the source. Files above 64 KiB and invalid UTF-8 are
+refused without replacing the previous source. Inputs remain in tab memory,
+are not written to storage or the URL, and clear on reload. **Recipe workspace**
+or Escape returns to the unchanged expert recipe and input.
+
+The existing result cards provide layer inspection, exact JSON/evidence saves
+and the complete-evidence copying fallback. Recipe links explicitly open a new
+tab; that action carries source bytes in the local URL fragment, using a native
+Base64 carrier to preserve line endings before the saved decoding steps.
+Saved evidence retains the original source, not that presentation carrier.
+Neither route authenticates input. The same profile and work limits apply.
+
+## Recipe workspace goals
 
 | Goal | Search and settings |
 | --- | --- |

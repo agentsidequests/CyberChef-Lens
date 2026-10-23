@@ -12,6 +12,12 @@ service. CyberChef's general-purpose Magic remains available under **Any**.
 
 ## Try it
 
+Open **Lens workspace** at the top left of the built app. Paste data or choose a
+UTF-8 file, then select **Find JSON**. **Compare two captures** provides separate
+file/paste inputs and explicit layer choices, without a recipe or delimiter.
+Result cards retain their decoding trails, parsing cautions and evidence saves.
+Your existing recipe workspace stays available through **Recipe workspace**.
+
 In the built app, open **Lens guide / Help** at the top right, then choose
 **Open the three-layer demo (new tab)**. It opens a separate workspace; your
 current input and recipe stay where they are.

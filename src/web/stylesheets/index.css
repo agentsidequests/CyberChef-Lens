@@ -38,3 +38,4 @@
 /* Operations */
 @import "./operations/diff.css";
 @import "./operations/json.css";
+@import "./layout/_lens-workspace.css";

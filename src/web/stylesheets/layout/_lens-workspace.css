@@ -1,0 +1,54 @@
+/* Guided Lens surface; native recipe themes remain separate. */
+#lens-workspace[hidden], #content-wrapper[hidden], #lens-workspace [hidden] { display: none !important; }
+#lens-workspace-open { background: #125a70; color: #fff; border: 0; padding: 0 12px; cursor: pointer; font-weight: 600; }
+#lens-workspace { position: fixed; inset: 0; z-index: 1200; overflow: auto; background: #eef3f5; color: #203247; font: 15px/1.5 Arial, sans-serif; }
+#lens-workspace * { box-sizing: border-box; }
+#lens-workspace .lw-shell { max-width: 1200px; margin: auto; padding: 0 28px 50px; }
+#lens-workspace .lw-header { display: flex; justify-content: space-between; align-items: center; gap: 15px; padding: 20px 0; border-bottom: 1px solid #cad6df; }
+#lens-workspace .lw-brand { font-weight: 700; letter-spacing: -.4px; font-size: 20px; }
+#lens-workspace .lw-local { display: inline-block; margin-left: 14px; font-size: 12px; color: #385e50; background: #dfede6; padding: 3px 9px; border-radius: 20px; }
+#lens-workspace .lw-intro { padding: 32px 0 16px; max-width: 700px; }
+#lens-workspace .lw-eyebrow { color: #45636f; font-size: 11px; font-weight: bold; letter-spacing: 2px; margin: 0 0 10px; }
+#lens-workspace h1 { font-size: clamp(28px, 4vw, 42px); line-height: 1.12; letter-spacing: -1px; margin: 0 0 14px; font-weight: 700; color: #133744; }
+#lens-workspace h2 { font-size: 21px; font-weight: 600; margin: 0 0 12px; color: #203247; }
+#lens-workspace p { margin: 0 0 12px; }
+#lens-workspace button, #lens-workspace select { font: inherit; border: 1px solid #9cb2bf; border-radius: 5px; padding: 9px 13px; color: #203247; background: #fff; cursor: pointer; }
+#lens-workspace button:disabled { opacity: .6; cursor: wait; }
+#lens-workspace button:focus-visible, #lens-workspace a:focus-visible, #lens-workspace textarea:focus-visible, #lens-workspace select:focus-visible, #lens-workspace summary:focus-visible, #lens-workspace input:focus-visible, #lens-workspace-open:focus-visible { outline: 3px solid #b45a00; outline-offset: 3px; }
+#lens-workspace .lw-primary { background: #125a70; border-color: #125a70; color: #fff; font-weight: 600; }
+#lens-workspace .lw-mode { display: flex; gap: 4px; margin: 8px 0 18px; flex-wrap: wrap; }
+#lens-workspace .lw-mode button { background: transparent; border-color: transparent; }
+#lens-workspace .lw-mode button[aria-pressed="true"] { background: #fff; border-color: #9cb2bf; box-shadow: 0 2px 3px #2032470a; font-weight: 600; }
+#lens-workspace .lw-sources { display: flex; flex-wrap: wrap; gap: 18px; }
+#lens-workspace .lw-source { flex: 1 1 360px; min-width: 0; background: #fff; border: 1px solid #c8d5de; border-radius: 8px; padding: 18px; }
+#lens-workspace .lw-source-title { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; gap: 10px; }
+#lens-workspace .lw-source-title label { font-weight: 600; margin: 0; }
+#lens-workspace .lw-source-title button { padding: 3px 9px; font-size: 12px; }
+#lens-workspace textarea { display: block; width: 100%; min-height: 150px; resize: vertical; padding: 12px; border: 1px solid #b4c5d1; border-radius: 4px; font: 12px/1.6 Consolas, monospace; color: #203247; background: #fafcfd; overflow-wrap: anywhere; }
+#lens-workspace .lw-file { display: block; margin: 14px 0 7px; font-size: 12px; font-weight: 600; }
+#lens-workspace input[type="file"] { display: block; max-width: 100%; margin: 5px 0; font-size: 12px; }
+#lens-workspace .lw-source-note { font-size: 11px; color: #496171; overflow-wrap: anywhere; margin: 0; }
+#lens-workspace .lw-dropping { outline: 3px dashed #125a70; outline-offset: -6px; }
+#lens-workspace .lw-run { display: flex; align-items: flex-start; flex-wrap: wrap; gap: 10px; margin: 18px 0 12px; }
+#lens-workspace .lw-depth { flex: 1 1 220px; max-width: 350px; font-size: 12px; margin-left: auto; padding: 8px 0; }
+#lens-workspace .lw-depth label { margin-right: 8px; }
+#lens-workspace .lw-depth select { padding: 4px 10px; margin: 8px 0; }
+#lens-workspace summary { cursor: pointer; }
+#lens-workspace #lw-status { border-left: 3px solid #125a70; padding: 9px 13px; background: #e2edf1; margin: 14px 0 8px; overflow-wrap: anywhere; }
+#lens-workspace .lw-footnote { font-size: 11px; color: #496171; margin: 0 0 24px; }
+#lens-workspace .lw-report, #lens-workspace .lw-compare { padding: 22px; background: #fff; border: 1px solid #c8d5de; border-radius: 8px; margin: 22px 0; }
+#lens-workspace .lw-compare label { display: block; margin: 12px 0; }
+#lens-workspace .lw-compare select { display: block; width: 100%; margin-top: 5px; }
+#lens-workspace .lw-compare > p { font-size: 13px; color: #496171; }
+#lens-workspace .magic-json { width: 100%; max-width: none; padding: 0; }
+#lens-workspace .json-structure { max-width: none; }
+#lens-workspace #lw-comparison { margin-top: 20px; }
+@media (max-width: 600px) {
+    #lens-workspace .lw-shell { padding: 0 14px 30px; }
+    #lens-workspace .lw-header { align-items: flex-start; padding: 14px 0; }
+    #lens-workspace .lw-local { display: block; margin: 5px 0 0; width: fit-content; }
+    #lens-workspace .lw-header button { font-size: 12px; padding: 8px; }
+    #lens-workspace .lw-intro { padding-top: 24px; }
+    #lens-workspace .lw-source, #lens-workspace .lw-report, #lens-workspace .lw-compare { padding: 14px; }
+    #lens-workspace .lw-depth { margin-left: 0; }
+}
