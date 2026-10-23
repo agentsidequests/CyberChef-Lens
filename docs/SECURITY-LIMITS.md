@@ -153,6 +153,31 @@ remain. No network request, key lookup, signature verification, authorization,
 issuer, schema or claim validation is performed. Generic arrays are not JWT
 Claims Set objects. No new general-purpose Magic recognizer is added.
 
+## Sharing-copy boundary
+
+Sharing copies are freshly constructed `cyberchef-lens-sharing-copy` records, not
+replayable evidence. Only modified payload text, generic notices and aggregate
+replacement counts enter the output. Original input, recipes, source coordinates,
+investigation metadata, saved warnings, rule strings and arbitrary imported fields
+are omitted, with no hidden originals in a download link. Imported recipes never
+execute during redaction. Existing evidence validation precedes payload work.
+
+Source-token replacement preserves untouched text, including duplicates and unsafe
+number spelling. Literal matching decodes strings/keys; it does not evaluate regex
+or paths. Selected subtrees suppress descendant edits. Literal-matched keys receive
+generic labels that cannot collide with existing/generated names. Lists are capped
+at 64 rules of 128 characters and 8 KiB each; complete payloads at 64 KiB, 16,384
+tokens and 64 containers; complete copy at 1 MiB. Exceeding a limit refuses output.
+
+Rules are selected redactions, not exhaustive secret or PII detection. Unknown
+names, unselected keys/values and encoded content may remain. Zero replacements
+do not attest privacy. The entire generated JSON is available for review, and only
+explicit download/manual copy exports it. No automatic upload or publication.
+The guided worker is disposable; source/rule/mode changes invalidate old results
+and links. The selected result record stays separate from source captures. No
+authentication, anonymity, irreversible erasure or independent privacy review is
+claimed. Review and keep original evidence separately.
+
 ## Saved replay verification boundary
 
 Explicit verification regenerates current bounded payload-trail routes from the

@@ -8,14 +8,18 @@ import "../../core/ChefWorker.js";
 import {investigateLensSource, compareLensSources} from "../../core/lib/LensWorkspace.mjs";
 import {verifyLensEvidence} from "../../core/lib/LensVerification.mjs";
 import {presentLensVerification} from "../../core/lib/MagicJsonPresentation.mjs";
+import {createLensSharingCopy} from "../../core/lib/LensSharing.mjs";
 
 self.addEventListener("message", async event => {
-    const {action, id, sources, depth} = event.data;
-    if (!["lensInvestigate", "lensCompare", "lensVerify"].includes(action)) return;
+    const {action, id, sources, depth, sharing} = event.data;
+    if (!["lensInvestigate", "lensCompare", "lensVerify", "lensShare"].includes(action)) return;
     try {
         let result;
         if (!Array.isArray(sources) || sources.length < 1 || sources.length > 2) throw new TypeError("Choose one or two sources.");
-        if (action === "lensVerify") {
+        if (action === "lensShare") {
+            if (sources.length !== 1 || typeof sources[0] !== "string") throw new TypeError("Load one saved evidence record.");
+            result = createLensSharingCopy(new TextEncoder().encode(sources[0]), sharing);
+        } else if (action === "lensVerify") {
             if (sources.length !== 1 || typeof sources[0] !== "string") throw new TypeError("Load one saved evidence record.");
             const verification = await verifyLensEvidence(new TextEncoder().encode(sources[0]));
             result = {html: presentLensVerification(verification), counts: verification.counts};

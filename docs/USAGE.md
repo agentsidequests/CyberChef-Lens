@@ -34,6 +34,39 @@ Base64 carrier to preserve line endings before the saved decoding steps.
 Saved evidence retains the original source, not that presentation carrier.
 Neither route authenticates input. The same profile and work limits apply.
 
+## Prepare a redacted sharing copy
+
+In **Verify saved evidence**, load a complete evidence record and choose **Prepare
+sharing copy**. You can also use **Prepare sharing copy from Source A/B** under a
+guided investigation's results, choosing the result explicitly. This leaves the
+original capture, evidence and recipe workspace unchanged. **Try a sharing example**
+loads invented credentials and identity so you can practice the review.
+
+The new copy omits the **entire original input, every recipe and HTTP source
+coordinate, investigation metadata, saved warnings, rule text and other record
+fields**. It includes the modified payload and generic sharing information only.
+Its format is `cyberchef-lens-sharing-copy`; it cannot be reopened or verified as
+an original `cyberchef-lens-evidence` record. Keep original evidence separately.
+
+Edit **Member names to redact** (case-insensitive; spaces, hyphens and underscores
+ignored) to replace whole member values, including containers and duplicate or
+escaped names. **Exact text to remove** matches case-sensitive substrings in
+decoded strings/keys, or exact number/boolean/null token spelling. Matching keys
+get distinct generic names. Rules are literal text, never regex or executable
+paths. Each list allows at most 64 rules of 128 characters, within 8 KiB.
+
+Choose **Refresh sharing copy** after editing rules. Changes to rules, sources or
+mode clear the old result and download link. Review the **Complete sharing JSON**,
+then explicitly download it or select all and copy its text. No file is uploaded
+or shared automatically. No-match results say that payload values remain intact.
+
+Selected rules can miss sensitive names, values and encoded content. Replacement
+counts are **not a privacy guarantee**; review every field before sharing. Original
+payload keys and unselected values remain unless a rule changes them. Untouched
+JSON numbers, escapes, duplicates and whitespace retain their original spelling.
+Redaction requires the complete payload to fit 64 KiB, 16,384 tokens and 64 nested
+containers; the full copy is capped at 1 MiB. A refusal produces no partial copy.
+
 ## Check saved replay
 
 Choose **Lens workspace → Verify saved evidence**. Paste a complete version-1

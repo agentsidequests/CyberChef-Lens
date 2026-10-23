@@ -7,7 +7,9 @@ import LensWorker from "worker-loader?inline=no-fallback!./workers/LensWorkspace
 import Utils from "../core/Utils.mjs";
 import {readLensSource} from "../core/lib/LensSource.mjs";
 import {presentPayloadTrail} from "../core/lib/MagicJsonPresentation.mjs";
-import {lensEvidenceExample} from "../core/lib/LensEvidenceExample.mjs";
+import {lensEvidenceExample, lensSharingExample} from "../core/lib/LensEvidenceExample.mjs";
+import {DEFAULT_SHARING_FIELDS} from "../core/lib/LensSharing.mjs";
+import {createJsonEvidence} from "../core/lib/MagicJsonExport.mjs";
 
 /** Attach a task surface without changing Input, Recipe, URL or stored options. */
 export default function setupLensWorkspace() {
@@ -35,9 +37,22 @@ export default function setupLensWorkspace() {
         <button type="button" id="lw-demo">Try the fictional example</button>
         <button type="button" id="lw-http-demo">Try an HTTP request</button>
         <button type="button" id="lw-evidence-demo" hidden>Try a saved example</button>
+        <button type="button" id="lw-share" hidden>Prepare sharing copy</button>
+        <button type="button" id="lw-share-demo" hidden>Try a sharing example</button>
         <details class="lw-depth" id="lw-settings"><summary>Search settings</summary><label for="lw-depth">Layer limit</label>
         <select id="lw-depth"><option>1</option><option>2</option><option selected>3</option><option>4</option><option>5</option></select>
         <p>Default: 3 layers. Recognized profiles only, up to 64 KiB per source. Increasing depth does not increase trust.</p></details></div>
+        <section id="lw-sharing" class="lw-report" aria-label="Sharing rules" hidden>
+        <h2>Choose what to redact</h2>
+        <p>The copy omits the complete original input, every recipe, source coordinates, investigation metadata and saved warnings. Only the modified payload and generic copy information are included. Originals stay unchanged.</p>
+        <div class="lw-sharing-rules"><div><label for="lw-share-fields">Member names to redact</label>
+        <p class="lw-source-note">One per line. Case, spaces, hyphens and underscores are ignored. Whole values or subtrees are replaced.</p>
+        <textarea id="lw-share-fields" spellcheck="false"></textarea></div>
+        <div><label for="lw-share-literals">Exact text to remove</label>
+        <p class="lw-source-note">One per line; edge spaces are trimmed. Case-sensitive substrings in decoded strings/keys, or exact number/boolean/null tokens. Whole matching values are replaced.</p>
+        <textarea id="lw-share-literals" spellcheck="false" placeholder="Optional: a name, identifier or credential…"></textarea></div></div>
+        <p class="lw-source-note">At most 64 rules of 128 characters per list. Payload limit: 64 KiB, 16,384 tokens and 64 nested containers. Nothing is truncated. Rules can miss unknown or encoded sensitive content; review the entire copy.</p>
+        </section>
         <p id="lw-status" role="status" aria-live="polite">Choose a file or paste data, then find JSON. Nothing runs while you type.</p>
         <p class="lw-footnote">Sources stay in this tab's memory and clear on reload. Decoding does not authenticate a signature, sender or claim.</p>
         <section id="lw-results" aria-label="Investigation results"></section>
@@ -48,7 +63,8 @@ export default function setupLensWorkspace() {
         get("lw-status").textContent = message;
     };
     const sources = [{text: "", revision: 0}, {text: "", revision: 0}];
-    let pair = false, verifying = false, reports = [], worker = null, job = 0;
+    let pair = false, verifying = false, reports = [], worker = null, job = 0, sharingRecord = null, sharingLabel = null;
+    get("lw-share-fields").value = DEFAULT_SHARING_FIELDS;
 
     /** Stop CPU work and reject any late reply before changing a source. */
     function stop() {
@@ -57,14 +73,19 @@ export default function setupLensWorkspace() {
         worker = null;
         get("lw-cancel").hidden = true;
         get("lw-run").disabled = false;
+        get("lw-share").disabled = false;
         get("lw-results").removeAttribute("aria-busy");
     }
 
     /** A source or mode change invalidates every dependent result. */
-    function invalidate() {
+    function invalidate(clearSharing=true) {
         stop(); reports = [];
+        if (clearSharing) {
+            sharingRecord = null; sharingLabel = null; get("lw-sharing").hidden = true;
+            get("lw-share").hidden = !verifying; get("lw-share").textContent = "Prepare sharing copy";
+        }
         get("lw-results").replaceChildren();
-        status("Sources changed. Find JSON again to refresh results.");
+        status("Sources or settings changed. Run the task again to refresh results.");
     }
 
     /** Keep raw file text separate from textarea newline normalization. */
@@ -162,6 +183,28 @@ export default function setupLensWorkspace() {
                 if (note.textContent.startsWith("Depth sets")) note.textContent = "The layer limit comes from Search settings. Only recognized profiles are followed.";
             });
             section.appendChild(content); target.appendChild(section);
+            if (report.outputs.length) {
+                const sharing = document.createElement("div"); sharing.className = "lw-result-share";
+                const label = document.createElement("label"); label.textContent = `Source ${index ? "B" : "A"} result to share `;
+                const select = document.createElement("select"); select.id = `lw-share-choice-${index}`;
+                report.outputs.forEach((group, value) => {
+                    const option = document.createElement("option"); option.value = value;
+                    option.textContent = `Result ${value + 1} · ${group.byteLength} bytes`; select.appendChild(option);
+                });
+                label.appendChild(select); sharing.appendChild(label);
+                const button = document.createElement("button"); button.type = "button";
+                button.textContent = `Prepare sharing copy from Source ${index ? "B" : "A"}`;
+                button.addEventListener("click", () => {
+                    try {
+                        const selected = Number(select.value);
+                        previewSharing(createJsonEvidence(report.outputs[selected], {report, mode: "JSON payload trail", index: selected, count: report.outputs.length}),
+                            `Source ${index ? "B" : "A"} · result ${selected + 1}`);
+                    } catch (error) {
+                        status(error.message);
+                    }
+                });
+                sharing.appendChild(button); section.appendChild(sharing);
+            }
         });
         if (pair && reports.every(report => report.outputs.length)) {
             const controls = document.createElement("section");
@@ -197,12 +240,43 @@ export default function setupLensWorkspace() {
         target.querySelector("h2").focus({preventScroll: true});
     }
 
+    /** Render only the newly constructed copy; no original record becomes a link. */
+    function showSharing(result) {
+        const section = document.createElement("section"); section.className = "lw-report";
+        section.innerHTML = '<h2 tabindex="-1">Review sharing copy</h2><p class="lw-sharing-origin"></p><p class="lw-sharing-count"></p>' +
+            "<p>This is a modified sharing copy, not replayable evidence. Original input, recipes, coordinates, metadata, warnings and rule text are omitted. Original sources and evidence stay unchanged.</p>" +
+            "<p>Review every field below. Rules can miss sensitive names, values and encoded content. A replacement count is not a privacy guarantee.</p>" +
+            '<label for="lw-sharing-payload">Payload in this sharing copy — complete</label><textarea id="lw-sharing-payload" readonly spellcheck="false"></textarea>' +
+            '<p><a class="lw-share-download" download="CyberChef-Lens-sharing-copy.json">Download sharing copy</a></p>' +
+            '<details><summary>Complete sharing JSON and manual copy</summary><label for="lw-sharing-json">Complete sharing JSON</label><textarea id="lw-sharing-json" readonly spellcheck="false"></textarea>' +
+            '<p class="lw-source-note">The entire copy is shown. You can select all and copy this text if downloading is unavailable. It is separate from the original evidence.</p></details>';
+        section.querySelector(".lw-sharing-origin").textContent = `Copy source: ${sharingLabel}.`;
+        section.querySelector(".lw-sharing-count").textContent = result.counts.total ?
+            `${result.counts.values} value/subtree replacements · ${result.counts.keys} key replacements · ${result.payloadBytes} modified-payload bytes.` :
+            "No values or keys matched these rules. The payload still contains all its original values. Review it or add rules before sharing.";
+        section.querySelector(".lw-share-download").href = "data:application/json;charset=utf-8," + encodeURIComponent(result.text);
+        section.querySelector("#lw-sharing-payload").value = JSON.parse(result.text).payload.text;
+        section.querySelector("#lw-sharing-json").value = result.text;
+        get("lw-results").replaceChildren(section);
+        status(`Sharing preview ready: ${result.counts.total} replacements. Review the complete copy; the original is unchanged.`);
+        section.scrollIntoView({block: "start"}); section.querySelector("h2").focus({preventScroll: true});
+    }
+
+    /** A selected-result record is retained separately from Source A/B. */
+    function previewSharing(text, label=sharingLabel || "Saved record in Source A") {
+        invalidate(false); sharingRecord = text; sharingLabel = label;
+        get("lw-sharing").hidden = false; get("lw-share").hidden = false;
+        get("lw-share").textContent = "Refresh sharing copy";
+        run("lensShare", [text]);
+    }
+
     /** A worker per job provides cancellation and isolates the original recipe. */
     function run(action, texts) {
         stop();
         const id = job;
         worker = new LensWorker();
         get("lw-run").disabled = true; get("lw-cancel").hidden = false;
+        get("lw-share").disabled = true;
         get("lw-results").setAttribute("aria-busy", "true");
         status("Working locally… Cancel remains available while native modules load and the bounded check runs.");
         const fail = message => {
@@ -215,7 +289,9 @@ export default function setupLensWorkspace() {
             if (message.action === "lensError") fail(message.error);
             if (message.action !== "lensComplete") return;
             stop();
-            if (action === "lensCompare") {
+            if (action === "lensShare") {
+                showSharing(message.result);
+            } else if (action === "lensCompare") {
                 get("lw-comparison").innerHTML = message.result.html;
                 status(`Comparison complete: ${message.result.report.total} change records across the selected layers.`);
                 get("lw-comparison").scrollIntoView({block: "start"});
@@ -231,7 +307,8 @@ export default function setupLensWorkspace() {
             }
         });
         worker.postMessage({action: "docURL", data: document.location.href.split(/[#?]/)[0].replace(/\/[^/]*$/, "")});
-        worker.postMessage({action, id, sources: texts, depth: Number(get("lw-depth").value)});
+        worker.postMessage({action, id, sources: texts, depth: Number(get("lw-depth").value),
+            sharing: action === "lensShare" ? {memberNames: get("lw-share-fields").value, exactText: get("lw-share-literals").value} : undefined});
     }
 
     /** Switch task while retaining both source texts for deliberate reuse. */
@@ -244,6 +321,7 @@ export default function setupLensWorkspace() {
         get("lw-verify").setAttribute("aria-pressed", String(verifying));
         get("lw-verify-note").hidden = !verifying;
         get("lw-evidence-demo").hidden = !verifying;
+        get("lw-share-demo").hidden = !verifying;
         for (const id of ["lw-demo", "lw-http-demo", "lw-settings"]) get(id).hidden = verifying;
         get("lw-input-0").placeholder = verifying ? "Paste one complete saved Lens evidence JSON record…" : "Paste JSON, encoded data, or a complete HTTP/1.x request…";
         sources.forEach((source, index) => {
@@ -255,6 +333,8 @@ export default function setupLensWorkspace() {
     get("lw-single").addEventListener("click", () => setMode("investigate"));
     get("lw-pair").addEventListener("click", () => setMode("compare"));
     get("lw-verify").addEventListener("click", () => setMode("verify"));
+    get("lw-share").addEventListener("click", () => previewSharing(sharingRecord ?? sources[0].text));
+    for (const id of ["lw-share-fields", "lw-share-literals"]) get(id).addEventListener("input", () => invalidate(false));
     get("lw-depth").addEventListener("change", invalidate);
     get("lw-run").addEventListener("click", () => {
         invalidate(); run(verifying ? "lensVerify" : "lensInvestigate", sources.slice(0, pair ? 2 : 1).map(source => source.text));
@@ -288,6 +368,13 @@ export default function setupLensWorkspace() {
         get("lw-input-0").value = sources[0].text;
         sourceNote(0, "Fictional saved record · edit it to try a changed claim");
         status("Saved example loaded. Choose Check saved evidence to compare its replay with the saved payload.");
+    });
+    get("lw-share-demo").addEventListener("click", () => {
+        setMode("verify"); sources[0].text = lensSharingExample();
+        get("lw-input-0").value = sources[0].text;
+        get("lw-share-fields").value = DEFAULT_SHARING_FIELDS; get("lw-share-literals").value = "";
+        sourceNote(0, "Fictional sharing example · invented token and identity");
+        previewSharing(sources[0].text, "Fictional sharing example in Source A");
     });
     opener.addEventListener("click", () => {
         native.hidden = true; root.hidden = false; get("lw-input-0").focus();
