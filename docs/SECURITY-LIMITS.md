@@ -82,12 +82,21 @@ rewritten output or semantic comparisons. Repeated keys are retained, not
 resolved or declared safe.
 
 Lens compares no more than eight results against the first displayed text,
-without selecting it as truth. Only the first changed token is located; a
+without selecting it as truth. The first-token glance is not a full comparison; a
 shortened preview can omit other differences. Exact text, formatting-only text
 and token differences are separate outcomes. Numeric spelling, string escapes
 and member order stay significant even when an application might treat them
 as equivalent. Unsupported/oversize comparisons remain explicitly unchecked;
 their original result and guarded recipe action remain available.
+
+Each differing inspected pair also has a collapsed field review, reusing the
+structural comparison below. It counts all changes within those document bounds
+and retains at most 128 detail records per pair, with omitted details explicit.
+Reference/Compared labels identify results, not chronology, intended meaning or
+trust. Up to seven pairs are prepared; opening the disclosure neither changes
+Input nor runs a recipe. The report does not select a result, suppress its
+warnings or combine layer texts into one answer. All additions/removals are
+included; the standalone Diff's display-filter controls do not apply here.
 
 Diff's separate JSON (lossless) mode formats both documents, then uses the
 existing line-diff library with a cooperative 250 ms and 1,024-edit cap. This

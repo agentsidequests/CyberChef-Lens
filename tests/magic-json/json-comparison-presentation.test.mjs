@@ -52,7 +52,7 @@ test("a long token preview is centered on the change instead of clipping the dec
     const html = presentJsonComparison([group(left), group(right)]);
     assert.match(html, /OLD/);
     assert.match(html, /NEW/);
-    assert.ok(html.length < 4000);
+    assert.ok(html.length < 16000, "two bounded views, not the complete long tokens");
 });
 
 test("trail cards use matching result numbers and disclose ignored search controls", () => {

@@ -65,8 +65,8 @@ Available now:
 - **Lossless JSON inspection:** format strict JSON without rounding numbers or
   dropping duplicate members; compare the formatted texts with an opt-in Diff
   mode. A structural Diff locates changed fields and array positions, including
-  duplicate-member occurrences. Lens also locates the first changed token across
-  checked investigation results.
+  duplicate-member occurrences. The same field review is available directly
+  between checked investigation results, without replacing Input.
 - **Parsing cautions:** locate repeated member names and selected JavaScript
   numeric range problems before passing a decoded document to another tool.
   Original fields and number spellings stay intact; no value is silently chosen.
@@ -131,8 +131,9 @@ not sort keys.
 For a full comparison, select **Diff → JSON (lossless)** and supply two documents
 separated by your sample delimiter. The example above uses the default blank-line
 delimiter. Or use **Compare checked texts** in a Lens
-investigation to locate the first differing token. A formatting-only match does
-not merge the original results or choose a decoding route.
+investigation for a first-token glance, then open **Review field changes** to
+inspect later differences with their source locations. A formatting-only match
+does not merge the original results or choose a decoding route.
 
 Native Character Diff and raw JSON Diff already preserve differences in these
 source strings. The addition is a lossless formatting-and-comparison workflow
@@ -142,9 +143,11 @@ comparison does not decide semantic equivalence or authenticate either message.
 
 The new text-inspection paths are bounded to 64 KiB per document, 16,384 tokens
 and 64 nested containers. Formatting output is capped at 1 MiB. Lens compares
-at most eight retained texts against one explicit reference and shows only the
-first changed token. The opt-in full Diff has cooperative work limits and
-refuses a completion claim if it cannot finish.
+at most eight retained texts against one explicit reference. Each differing pair
+has a collapsed field review with complete bounded counts and up to 128 detail
+records. Reference/Compared are result labels, not a chronology or a choice of
+truth. The opt-in full line Diff has cooperative work limits and refuses a
+completion claim if it cannot finish.
 
 Valid JSON is not the end of the investigation. Consider:
 

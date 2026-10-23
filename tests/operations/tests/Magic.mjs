@@ -428,5 +428,12 @@ TestRegister.addTests([
         input: "Cookie: cart=" + Buffer.from("eyJhbGciOiJub25lIn0." + Buffer.from('{"fresh":"copied-cookie"}').toString("base64url") + ".").toString("base64") + "; cart.sig=" + "A".repeat(43) + "\n",
         expectedMatch: /Layer 2[\s\S]+copied-cookie/,
         recipeConfig: [{op: "Magic", args: [3, false, false, "", "JSON payload trail"]}]
-    }
+    },
+    ...["JSON object or array", "JSON wrappers", "JSON payload trail"].map(goal => ({
+        name: `Magic ${goal}: field review reaches later changes without selecting a result`,
+        input: "Cookie: first=" + Buffer.from('{"n":9007199254740992,"role":"viewer"}').toString("base64") + "; first.sig=" + "A".repeat(43) +
+            "; second=" + Buffer.from('{"n":9007199254740993,"role":"admin","limit":1e400}').toString("base64") + "; second.sig=" + "A".repeat(43),
+        expectedMatch: /Review field changes · 3 changes[\s\S]+3 changes across the compared structure[\s\S]+Reference · Result 1[\s\S]+Compared · Result 2[\s\S]+viewer[\s\S]+admin/,
+        recipeConfig: [{op: "Magic", args: [3, false, false, "", goal]}]
+    }))
 ]);

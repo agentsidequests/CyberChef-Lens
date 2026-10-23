@@ -5,6 +5,8 @@
  */
 import Utils from "../Utils.mjs";
 import {compareJsonTexts} from "./JsonText.mjs";
+import {compareJsonStructure} from "./JsonStructure.mjs";
+import {presentJsonStructure} from "./JsonStructurePresentation.mjs";
 import {presentJsonHazards} from "./JsonHazardPresentation.mjs";
 import {createJsonEvidence, JSON_EXPORT_BYTES} from "./MagicJsonExport.mjs";
 
@@ -162,18 +164,26 @@ export function presentJsonComparison(groups, layered=false) {
     const hasContainer = groups.some(group => group.role === "Outer JSON envelope");
     const nestedLayers = layered && new Set(groups.map(group => group.sources[0].depth)).size > 1;
     const label = index => `Result ${index + 1}` + (layered ? ` · layer ${groups[index].sources[0].depth}` : groups[index].role ? ` · ${groups[index].role}` : "");
-    let output = `<details class="mj-comparison"${groups.length === 2 && !layered && !hasContainer ? " open" : ""}><summary>Compare ${Math.min(groups.length, 8)} ${layered ? "layer texts" : "checked texts"} — first difference</summary>` +
+    let output = `<details class="mj-comparison"${groups.length === 2 && !layered && !hasContainer ? " open" : ""}><summary>Compare ${Math.min(groups.length, 8)} ${layered ? "layer texts" : "checked texts"}</summary>` +
         `<p class="mj-meta">${nestedLayers || hasContainer ? "Different container/payload layers are not competing answers. " : layered ? "Separate container branches may carry different messages. " : ""}Reference: ${escape(label(0))}, for comparison only—not a preferred truth. ` +
-        "Only the first changed token is located; this is not a complete diff or semantic-equivalence check. Numeric spelling, escapes and member order stay significant. Recipes and their warnings remain with each result below.</p>";
+        "The first-token glance is not a complete diff or semantic-equivalence check. Open the field review for changes beyond that token. Numeric spelling, escapes and member order stay significant. Recipes and their warnings remain with each result below.</p>";
     for (let index = 1; index < Math.min(groups.length, 8); index++) {
         const result = compareJsonTexts(groups[0].text, groups[index].text);
         const status = {identical: "Exact text matches", "formatting-only": "Only insignificant JSON whitespace differs", different: "JSON token text differs", "not-compared": "Not compared — inspection limit or unsupported text"}[result.status];
         output += '<div class="mj-pair">' + `<h3>${escape(label(0))} ↔ ${escape(label(index))}</h3><p><strong>${escape(status)}</strong></p>`;
-        if (result.status === "different") output += '<div class="mj-sides">' + [[0, result.left], [index, result.right]].map(([side, token]) =>
-            '<div class="mj-side">' + `<p class="mj-label">${escape(label(side))} · ${escape(token.kind)} token · line ${token.line}, column ${token.column}</p>` +
+        if (result.status === "different") {
+            output += '<div class="mj-sides">' + [[0, result.left], [index, result.right]].map(([side, token]) =>
+                '<div class="mj-side">' + `<p class="mj-label">${escape(label(side))} · ${escape(token.kind)} token · line ${token.line}, column ${token.column}</p>` +
             pre(tokenWindow(token, result.withinTokenOffset), `${label(side)} changed token preview`) + "</div>").join("") + "</div>" +
-            '<p class="mj-meta">Token previews are shortened around the first changed character when needed. Columns count Unicode characters, not bytes. More changes may exist.</p>';
-        else if (result.status === "formatting-only") output += '<p class="mj-meta">The complete non-whitespace token sequences match. The original formatting and each decoding route remain separate below.</p>';
+            '<p class="mj-meta">Token previews are shortened around the first changed character when needed. Columns count Unicode characters, not bytes.</p>';
+            // Reuse Diff's bounded source-span review; never replace Input to compare.
+            const structure = compareJsonStructure(groups[0].text, groups[index].text);
+            output += `<details class="mj-field-review"><summary>Review field changes · ${structure.total} change${structure.total === 1 ? "" : "s"}</summary>` +
+                '<p class="mj-meta">Reference and compared identify the two results, not an earlier/later sequence or a preferred interpretation.</p>' +
+                presentJsonStructure(structure, groups[0].text, groups[index].text, {
+                    beforeLabel: `Reference · ${label(0)}`, afterLabel: `Compared · ${label(index)}`, embedded: true
+                }) + "</details>";
+        } else if (result.status === "formatting-only") output += '<p class="mj-meta">The complete non-whitespace token sequences match. The original formatting and each decoding route remain separate below.</p>';
         else if (result.reason) output += `<p class="mj-meta">${escape(result.reason)}. The original results and recipes are still available below.</p>`;
         output += "</div>";
     }
