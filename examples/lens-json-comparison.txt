@@ -1,0 +1,19 @@
+{
+  "case": "SUP-4821",
+  "account": 9007199254740992,
+  "role": "viewer",
+  "\u0072ole": "reviewer",
+  "limits": {"daily": 1e400, "region": "us"},
+  "queues": ["triage", "review"],
+  "retired": true
+}
+===
+{
+  "case": "SUP-4821",
+  "account": 9007199254740993,
+  "role": "viewer",
+  "role": "admin",
+  "limits": {"daily": 2e400, "region": "us"},
+  "queues": ["triage", "fast-track", "audit"],
+  "enabled": true
+}

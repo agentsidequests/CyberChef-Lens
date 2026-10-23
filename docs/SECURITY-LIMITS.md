@@ -161,6 +161,29 @@ lossless output and all default legacy formatting remain unchanged. A formatter
 can produce more than 64 KiB from a small input; in that case its presentation
 reports that the caution inspection could not complete.
 
+## Structural JSON comparison
+
+Diff's opt-in **JSON structure (lossless)** mode builds a source-span tree from
+the existing bounded strict-JSON token inspection. Only member names are decoded
+to match them; values are compared by original token spelling. Untrusted names
+use Maps, not object properties. No input-supplied operation, path or expression
+is executed. All source snippets and report labels are escaped before display.
+
+Objects match decoded name plus occurrence number; arrays match index. Member
+order and key spelling are independent change categories. Duplicate alignment is
+a deterministic report convention, not a claim that an occurrence kept its real
+identity or that any application selects it. No Unicode normalization, numeric
+equivalence, array move inference, schema or authenticity check is performed.
+
+Each document is limited to 64 KiB, 16,384 tokens and 64 nested containers.
+At most 128 change records retain details; complete category counts still cover
+the bounded inputs. A subtree addition/removal or type replacement is one record.
+Source previews are capped near 320 characters; path labels at 512 UTF-16 units,
+with explicit shortening and source positions. Filters hide only whole addition
+or removal records, never the comparison conclusion or total counts. Malformed
+or oversized input is an error, not equality. These bounds are not a hard process
+sandbox or a cross-browser performance guarantee. Existing Diff modes remain.
+
 ## Inherited dependency advisories — reviewed October 22, 2026
 
 The production lockfile audit reports 26 affected package entries: 1 critical,

@@ -64,3 +64,18 @@ The examples require no network service, key or API account.
 result keeps the exact reference payload and two parsing cautions. Its label
 does not verify a JWT, signature or session. In trail mode the field and compact
 token are one named compound carrier profile backed by native extraction.
+
+## Compare two fictional captures
+
+Put the complete `lens-json-comparison.txt` in Input. Add **Diff**, set
+**Sample delimiter** to `\n===\n`, and choose **JSON structure (lossless)**.
+Eight change records locate the account number, second role's key spelling and
+value, daily limit, changed/added array positions, removed `retired` member and
+added `enabled` member. Both documents contain deliberate numeric/parser
+cautions. They are not real sessions and do not demonstrate authorization.
+
+Paths use decoded names and duplicate occurrence numbers; arrays use zero-based
+indexes. Counts are change records, not affected leaf counts or a semantic
+assessment. **Show added** and **Show removed** filter corresponding records
+without hiding their totals. Source locations and exact token previews remain
+inspectable. **JSON (lossless)** retains the separate full line-comparison route.

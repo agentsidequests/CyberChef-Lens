@@ -64,7 +64,9 @@ Available now:
   Different JSON layers remain separate; deeper is not more trustworthy.
 - **Lossless JSON inspection:** format strict JSON without rounding numbers or
   dropping duplicate members; compare the formatted texts with an opt-in Diff
-  mode. Lens also locates the first changed token across checked results.
+  mode. A structural Diff locates changed fields and array positions, including
+  duplicate-member occurrences. Lens also locates the first changed token across
+  checked investigation results.
 - **Parsing cautions:** locate repeated member names and selected JavaScript
   numeric range problems before passing a decoded document to another tool.
   Original fields and number spellings stay intact; no value is silently chosen.
@@ -162,6 +164,30 @@ numbers becoming zero, and magnitudes outside JavaScript's safe-integer range.
 They are not a complete floating-point precision or security audit. A quiet card
 is not a safety verdict. Inspection is limited to the text budgets above, with
 at most 16 detailed findings shown and complete counts for an inspected document.
+
+## Compare the fields, not just the first change
+
+To review two captures, put the [fictional comparison sample](examples/lens-json-comparison.txt)
+in Input. Add **Diff**, set **Sample delimiter** to `\n===\n`, and choose
+**Diff by → JSON structure (lossless)**. The sample produces eight change records:
+the account number, the second role's spelling and value, a limit, two array
+positions, one removed member and one added member. Before/After panels retain
+the original tokens and source locations, including `1e400` rather than a parsed
+JavaScript infinity or `null`.
+
+Members match by decoded name and occurrence, not by a parser's last retained
+value. `$["role"]#2` identifies the second member with that decoded name. Arrays
+match by index; an insertion may appear as several changed positions, not an
+inferred move. Reordered matched members get their own record. String escapes,
+numeric spelling and member order remain differences; this is not semantic
+equality, JSONPath execution or a choice of intended meaning.
+
+The review counts changes across both complete bounded documents, but retains
+at most 128 detail records. Hidden additions/removals and omitted records are
+explicit. Added/removed subtrees and type replacements count once, not once per
+descendant. For a full line comparison, use **JSON (lossless)** instead. Native
+Character and Line Diff can already find raw changes; the addition is a
+source-preserving field/occurrence review.
 
 ## Published-format check
 
