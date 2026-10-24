@@ -10,6 +10,28 @@ fields without rewriting their values.
 The added investigations run in your browser, without a model or external
 service. CyberChef's general-purpose Magic remains available under **Any**.
 
+## Run locally
+
+This fork is distributed as source. You need Git and **Node.js 24**, which includes
+npm. Clone this Lens repository and start its local development app:
+
+```sh
+git clone --branch lens https://github.com/agentsidequests/CyberChef-Lens.git
+cd CyberChef-Lens
+npm ci --ignore-scripts --no-audit --no-fund
+npm run prepare:magic-json
+npm start
+```
+
+The first start generates configuration and compiles the app; this can take
+several minutes. Wait for webpack to report a successful compilation, then open
+**[http://localhost:8080](http://localhost:8080)**. Keep the terminal running while
+you use Lens; press **Ctrl+C** there to stop it. Source edits rebuild automatically.
+
+Continue with **Try it** below. To change the app, see
+[Contributing to Lens](CONTRIBUTING.md); for the full test and production-build
+sequence, see [Build and check](#build-and-check).
+
 ## Try it
 
 Open **Lens workspace** at the top left of the built app. Paste data or choose a
@@ -100,7 +122,9 @@ that no payload exists. The result reports its scope and stopping points.
 
 ## Build and check
 
-Use Node.js 24 and the included lockfile:
+From the cloned repository, use Node.js 24 and the included lockfile. This
+sequence installs dependencies, prepares the app, runs its checks and produces
+a production build:
 
 ```sh
 npm ci --ignore-scripts --no-audit --no-fund
@@ -110,11 +134,11 @@ npm run test:magic-json
 npm run build
 ```
 
-The production app and standalone ZIP are in `build/prod/`. Serve that directory
-locally to review the production build; `npm start` runs the development server.
+The production app and standalone ZIP are in `build/prod/`. For an interactive
+local workspace, follow [Run locally](#run-locally).
 The preparation command runs the inspected source generators and compatibility
 fixes, not dependency lifecycle hooks or a browser installer. The check-only CI
-workflow does not deploy or publish anything; an actual remote run is separate.
+workflow uses this sequence and does not deploy or publish anything.
 Preparation and normal builds enforce a reviewed local RSA-verification guard
 for node-forge 1.4.0. Unknown versions or modified bytes require review; see
 [security limits](docs/SECURITY-LIMITS.md#dependency-advisories--reviewed-october-23-2026).

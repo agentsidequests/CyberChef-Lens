@@ -1,18 +1,28 @@
-# Contributing
+# Contributing to CyberChef Lens
 
-Take a look through the [Wiki pages](https://github.com/gchq/CyberChef/wiki) for guides on [compiling CyberChef](https://github.com/gchq/CyberChef/wiki/Getting-started) and [adding new operations](https://github.com/gchq/CyberChef/wiki/Adding-a-new-operation).
+This is the unofficial **agentsidequests/CyberChef-Lens** fork. Changes intended
+for Lens should target this repository's **lens** branch.
 
-There are lots of opportunities to contribute to CyberChef. If you want ideas, take a look at any [Issues](https://github.com/gchq/CyberChef/issues) tagged with '[help wanted](https://github.com/gchq/CyberChef/labels/help%20wanted)'.
+## Work on Lens
 
-Before your contributions can be accepted, you must:
+1. Follow the [local quick start](README.md#run-locally), using Git and Node.js 24.
+2. Fork [CyberChef Lens](https://github.com/agentsidequests/CyberChef-Lens) and
+   create a feature branch from `lens` for your changes.
+3. Include tests for changed behavior and invalid-input cases. Keep the original
+   license, copyright and third-party notices intact.
+4. Run the [build and check sequence](README.md#build-and-check).
+5. Open a pull request to **agentsidequests/CyberChef-Lens**, with **lens** as the
+   base branch. Explain the problem, the change and the checks you ran.
 
- - Fork the CyberChef repo
- - Create a new branch within your fork for the changes
- - Push your changes to your fork.
- - Sign the [GCHQ Contributor Licence Agreement](https://cla-assistant.io/gchq/CyberChef)
- - Submit a pull request.
+The coding conventions and design principles below also apply to Lens.
 
-Please note that we will ***reject*** pull requests from the master branch of your fork owing to the mess it makes of our own working repositories and the extra work entailed.
+## Contributions to upstream CyberChef
+
+For changes intended for **gchq/CyberChef**, follow
+[its contribution guide](https://github.com/gchq/CyberChef/blob/master/CONTRIBUTING.md).
+That guide covers upstream's issue tracker, review process and GCHQ Contributor
+Licence Agreement. Upstream's project documentation is also preserved in
+[UPSTREAM-README.md](UPSTREAM-README.md).
 
 ## Coding conventions
 
