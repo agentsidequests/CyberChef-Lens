@@ -12,8 +12,7 @@ service. CyberChef's general-purpose Magic remains available under **Any**.
 
 ## Run locally
 
-This fork is distributed as source. You need Git and **Node.js 24**, which includes
-npm. Clone this Lens repository and start its local development app:
+You need Git and **Node.js 24** with npm. Clone this source-only fork and start Lens:
 
 ```sh
 git clone --branch lens https://github.com/agentsidequests/CyberChef-Lens.git
@@ -23,14 +22,11 @@ npm run prepare:magic-json
 npm start
 ```
 
-The first start generates configuration and compiles the app; this can take
-several minutes. Wait for webpack to report a successful compilation, then open
-**[http://localhost:8080](http://localhost:8080)**. Keep the terminal running while
-you use Lens; press **Ctrl+C** there to stop it. Source edits rebuild automatically.
+The first start can take several minutes. Wait for webpack's successful compilation,
+then open **[http://localhost:8080](http://localhost:8080)**. Keep the terminal running;
+press **Ctrl+C** there to stop it. Source edits rebuild automatically.
 
-Continue with **Try it** below. To change the app, see
-[Contributing to Lens](CONTRIBUTING.md); for the full test and production-build
-sequence, see [Build and check](#build-and-check).
+Continue with **Try it** below or [contribute a change](CONTRIBUTING.md).
 
 ## Try it
 
@@ -40,34 +36,23 @@ file/paste inputs and explicit layer choices, without a recipe or delimiter.
 Result cards retain their decoding trails, parsing cautions and evidence saves.
 Your existing recipe workspace stays available through **Recipe workspace**.
 
-**Import HAR** lists the entries in a browser network capture. Choose one request
-or response body, then **Find JSON in selected body**. Source A keeps the complete
-capture; recipes and evidence start from the chosen body. Missing bodies and
-unsupported encodings stay explicit. [HAR import scope](docs/USAGE.md#import-a-har-capture).
-For one entry, **Compare request and response** investigates both recorded bodies
-and shows their field differences directly, with independent JSON-layer choices.
+**Import HAR** lets you investigate a recorded request or response body, or compare
+both with separate layer choices. [HAR scope and steps](docs/USAGE.md#import-a-har-capture).
 
-You can also paste one **complete HTTP/1.x request**. **Try an HTTP request**
-loads a fictional example whose Authorization payload and JSON body disagree.
-Results show each field's source line and UTF-8 byte range; the original request
-and full replay recipes stay together. [Supported request framing](docs/USAGE.md#whole-copied-http-requests).
+**Try an HTTP request** loads a fictional Authorization/body disagreement with
+source locations and replay recipes. [Whole-request steps](docs/USAGE.md#whole-copied-http-requests).
 
-To recheck an exported record, choose **Verify saved evidence** in the workspace,
-load its complete JSON file and select **Check saved evidence**. Supported routes
-are regenerated from the saved input; each claimed replay either matches,
-differs or remains unreproduced. [Verification scope](docs/USAGE.md#check-saved-replay).
+**Verify saved evidence** replays supported routes against the saved input and
+reports matches, differences or unreproduced routes. [Steps and scope](docs/USAGE.md#check-saved-replay).
 
 In the built app, open **Lens guide / Help** at the top right, then choose
 **Open the three-layer demo (new tab)**. It opens a separate workspace; your
 current input and recipe stay where they are.
 
-The fictional sample goes through Base64, a paired Cookie and a compact token.
-Its final JSON has **two parsing cautions**. Open **Inspect locations and parsing
-consequences**: the account number can round in JavaScript, and two differently
-spelled fields decode to the same name. The signatures are fabricated.
-
-Choose **Load full JSON recipe** to reproduce the exact payload from the original
-input. Nothing is authenticated and no conflicting value is selected for you.
+The sample follows Base64, a paired Cookie and a compact token to **two parsing
+cautions**: numeric rounding and repeated decoded names. Inspect their locations,
+then **Load full JSON recipe** to reproduce the original payload. Its signatures
+are fabricated; nothing is authenticated and no conflicting value is selected.
 
 ![A three-layer investigation retains the exact JSON and locates two parsing cautions.](docs/images/investigation.png)
 
@@ -122,9 +107,7 @@ that no payload exists. The result reports its scope and stopping points.
 
 ## Build and check
 
-From the cloned repository, use Node.js 24 and the included lockfile. This
-sequence installs dependencies, prepares the app, runs its checks and produces
-a production build:
+Run these checks and the production build from the repository directory:
 
 ```sh
 npm ci --ignore-scripts --no-audit --no-fund
