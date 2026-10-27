@@ -4,6 +4,8 @@
  * @author SamuelNotes
  * @license Apache-2.0
  */
+import {jsonSourceLocation} from "./JsonSourceLocation.mjs";
+
 const ENCODER = new TextEncoder();
 const TOKEN = /"(?:\\.|[^"\\])*"|-?(?:0|[1-9]\d*)(?:\.\d+)?(?:[eE][+-]?\d+)?|true|false|null|[{}[\],:]/y;
 
@@ -73,9 +75,8 @@ export function formatJsonText(text, indent="  ", {maxOutputBytes=1048576, ...li
 
 /** Locate an exact token; columns count Unicode code points, not bytes. */
 function locate(text, token) {
-    if (!token) return {kind: "end", raw: "", start: text.length, line: text.split("\n").length, column: 1};
-    const prefix = text.slice(0, token.start);
-    return {...token, line: prefix.split("\n").length, column: [...prefix.slice(prefix.lastIndexOf("\n") + 1)].length + 1};
+    if (!token) return {kind: "end", raw: "", start: text.length, ...jsonSourceLocation(text, text.length)};
+    return {...token, ...jsonSourceLocation(text, token.start)};
 }
 
 /** First differing token only; no semantic equivalence or complete-diff claim. */

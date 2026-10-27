@@ -5,6 +5,7 @@
  * @license Apache-2.0
  */
 import {inspectJsonText} from "./JsonText.mjs";
+import {jsonSourceLocation} from "./JsonSourceLocation.mjs";
 
 /** Build a source-span tree after the existing syntax and budget checks. */
 function tree(text, limits) {
@@ -45,9 +46,8 @@ function tree(text, limits) {
 /** Source line and Unicode-character column; never a byte-offset claim. */
 function side(text, span) {
     if (!span) return null;
-    const prefix = text.slice(0, span.start);
     return {raw: text.slice(span.start, span.end), start: span.start, end: span.end,
-        line: prefix.split("\n").length, column: [...prefix.slice(prefix.lastIndexOf("\n") + 1)].length + 1};
+        ...jsonSourceLocation(text, span.start)};
 }
 
 /** Keep a long path bounded, without cutting a surrogate pair. */

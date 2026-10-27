@@ -4,12 +4,11 @@
  * @license Apache-2.0
  */
 import {inspectJsonText} from "./JsonText.mjs";
+import {jsonSourceLocation} from "./JsonSourceLocation.mjs";
 
 /** Original decoded-text location, counting Unicode code points. */
 function location(text, token) {
-    const prefix = text.slice(0, token.start);
-    return {raw: token.raw, line: prefix.split("\n").length,
-        column: [...prefix.slice(prefix.lastIndexOf("\n") + 1)].length + 1};
+    return {raw: token.raw, ...jsonSourceLocation(text, token.start)};
 }
 
 /** Inspect duplicate names and selected JavaScript numeric range effects only. */
